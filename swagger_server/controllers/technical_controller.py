@@ -1,5 +1,8 @@
+from timeit import default_timer
+
 import connexion
 
+from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.generic_response import GenericResponse  # noqa: E501
 from swagger_server.models.response_error import ResponseError  # noqa: E501
 from swagger_server.models.tehnical_data import TehnicalData  # noqa: E501
@@ -10,13 +13,17 @@ from flask.views import MethodView
 from loguru import logger
 import json
 
+from swagger_server.repository.technical_repository import TechnicalRepository
+from swagger_server.uses_cases.technical_use_case import TechnicalUseCase
+from swagger_server.utils.transactions.transaction import generate_internal_transaction_id
+
 class TechnicalView(MethodView):
     def __init__(self):
         self.logger = logger
-        logbook_repository = TechnicalRepository()
-        self.logbook_use_case = TechnicalUseCase(logbook_repository)
+        technical_control_repository = TechnicalRepository()
+        self.logbook_use_case = TechnicalUseCase(technical_control_repository)
 
-    def post_technical(technical_data=None, channel=None, external_transaction_id=None):  # noqa: E501
+    def post_technical(self, technical_data=None, channel=None, external_transaction_id=None):  # noqa: E501
         """Guarda el control tecnico en la base de datos.
 
         Guardado de control tecnico de ingreso # noqa: E501

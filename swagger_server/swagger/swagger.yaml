@@ -49,7 +49,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseError"
-      x-openapi-router-controller: swagger_server.controllers.technical_controller.LogbookView
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
 components:
   schemas:
     RequestPostLogbookEntry:
