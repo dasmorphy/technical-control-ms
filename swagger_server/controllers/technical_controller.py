@@ -5,7 +5,6 @@ import connexion
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.generic_response import GenericResponse  # noqa: E501
 from swagger_server.models.response_error import ResponseError  # noqa: E501
-from swagger_server.models.tehnical_data import TehnicalData  # noqa: E501
 from swagger_server import util
 from flask import jsonify, request, send_file
 from flask.views import MethodView
@@ -21,7 +20,7 @@ class TechnicalView(MethodView):
     def __init__(self):
         self.logger = logger
         technical_control_repository = TechnicalRepository()
-        self.logbook_use_case = TechnicalUseCase(technical_control_repository)
+        self.technical_use_case = TechnicalUseCase(technical_control_repository)
 
     def post_technical(self, technical_data=None, channel=None, external_transaction_id=None):  # noqa: E501
         """Guarda el control tecnico en la base de datos.
@@ -38,34 +37,34 @@ class TechnicalView(MethodView):
         :rtype: GenericResponse
         """
         internal_process = (None, None)
-        function_name = "post_logbook_entry"
+        function_name = "post_technical"
         response = {}
         status_code = 500
         try:
             if request.content_type.startswith("multipart/form-data"):
                 start_time = default_timer()
                 internal_transaction_id = str(generate_internal_transaction_id())
+                technical_data = request.files.get("technical_data")
 
-                logbook_file = request.files.get("logbook_entry")
-                if not logbook_file:
-                    raise CustomAPIException("Campo logbook_entry no enviado", 400)
+                if not technical_data:
+                    raise CustomAPIException("Campo technical_data no enviado", 400)
 
-                logbook_raw = logbook_file.read().decode("utf-8")
-                logbook_dict = json.loads(logbook_raw)
+                technical_raw = technical_data.read().decode("utf-8")
+                technical_dict = json.loads(technical_raw)
 
-                external_transaction_id = logbook_dict['external_transaction_id']
+                external_transaction_id = technical_dict['external_transaction_id']
                 internal_process = (internal_transaction_id, external_transaction_id)
                 response["internal_transaction_id"] = internal_transaction_id
                 response["external_transaction_id"] = external_transaction_id
-                message = f"start request: {function_name}, channel: {logbook_dict['channel']}"
+                message = f"start request: {function_name}, channel: {technical_dict['channel']}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
                 files = request.files.getlist("images")
-                self.logbook_use_case.post_logbook_entry(logbook_dict, files, internal_transaction_id, external_transaction_id)
+                self.technical_use_case.post_technical_control(technical_dict, internal_transaction_id, external_transaction_id)
                 response["error_code"] = 0
-                response["message"] = "Bitácora de ingreso creada correctamente"
+                response["message"] = "Control técnico creado correctamente"
                 end_time = default_timer()
                 logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
-                            internal=internal_transaction_id, external=logbook_dict['external_transaction_id'])
+                            internal=internal_transaction_id, external=technical_dict['external_transaction_id'])
                 status_code = 200
         except Exception as ex:
             response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)

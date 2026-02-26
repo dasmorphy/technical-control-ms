@@ -17,7 +17,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/RequestPostLogbookEntry"
+              $ref: "#/components/schemas/RequestPostTechnicalControl"
       responses:
         "200":
           description: OK
@@ -52,45 +52,65 @@ paths:
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
 components:
   schemas:
-    RequestPostLogbookEntry:
+    RequestPostTechnicalControl:
       properties:
         technical_data:
-          $ref: "#/components/schemas/TehnicalData"
+          $ref: "#/components/schemas/TechnicalData"
         channel:
           type: string
           example: Tech control
         externalTransactionId:
           type: string
           example: fcea920f7412b5da7be0cf42b8c93759
-    TehnicalData:
+    TechnicalData:
       type: object
       properties:
         created_at:
           type: string
           example: 2022-02-03 13:58:00
         reasons:
-          $ref: "#/components/schemas/Reasons"
+          type: array
+          items:
+            type: integer
+          example: [1,2,3]
         project:
-          $ref: "#/components/schemas/Project"
+          type: array
+          items:
+            type: integer
+          example: [1,2,3]
         id_truck_license:
           type: integer
           example: 1
-        id_level_gasoline:
-          type: integer
-          example: 1
+        initial_gasoline:
+          type: string
+          example: "3/4"
+        final_gasoline:
+          type: string
+          example: "3/4"
+          nullable: true
         initial_km:
           type: string
           example: "1"
         driver_companion:
-          $ref: "#/components/schemas/DriverCompanion"
-        starting_point:
-          type: string
+          type: array
+          items:
+            type: integer
+          example: [1,2,3]
         route_point:
           type: string
-        obseervations:
+        observations:
           type: string
           nullable: true
-        images:
+        created_by:
+          type: string
+          example: "dmales"
+        initial_images:
+          maxItems: 10
+          type: array
+          items:
+            type: string
+            format: binary
+        final_images:
           maxItems: 10
           type: array
           items:
@@ -99,27 +119,16 @@ components:
       example:
         created_at: 2022-02-03 13:58:00
         id_level_gasoline: 4
-        reasons:
-        - id_reason: 1
-          reason: Trabajo programador
-        - id_reason: 2
-          reason: Razon
-        project:
-        - id_project: 1
-          name: Expalsa
-        - id_project: 2
-          name: Biomar
+        reasons: [1,2,3]
+        project: [1,2,3]
         id_truck_license: 1
         initial_km: 15555
-        driver_companion:
-        - id_driver_companion: 1
-          name: Daniel
-        - id_driver_companion: 2
-          name: Juan
-        starting_point: Telearseg
+        driver_companion: [1,2,3]
         route_point: Expalsa
         observations: Sin observacion
-        images: []
+        initial_images: []
+        final_images: []
+        created_by: dmales
     GenericResponse:
       properties:
         data:

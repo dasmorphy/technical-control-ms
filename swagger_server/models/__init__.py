@@ -11,6 +11,6 @@ from swagger_server.models.projects_data import ProjectsData
 from swagger_server.models.reasons import Reasons
 from swagger_server.models.reasons_data import ReasonsData
 from swagger_server.models.request_generic import RequestGeneric
-from swagger_server.models.request_post_logbook_entry import RequestPostLogbookEntry
+from swagger_server.models.request_post_technical_control  import RequestPostTechnicalControl
 from swagger_server.models.response_error import ResponseError
-from swagger_server.models.tehnical_data import TehnicalData
+from swagger_server.models.technical_data import TechnicalData
