@@ -11,3 +11,6 @@ class TechnicalUseCase:
         
 
         self.technical_control_repository.post_technical_control(body, internal, external)
+
+    def get_all_drivers(self, internal, external):
+        return self.technical_control_repository.get_all_drivers(internal, external)

@@ -14,7 +14,7 @@ class TechnicalData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, created_at: str=None, reasons: List[int]=None, project: List[int]=None, id_truck_license: int=None, initial_gasoline: str=None, final_gasoline: str=None, initial_km: str=None, driver_companion: List[int]=None, route_point: str=None, observations: str=None, created_by: str=None, initial_images: List[str]=None, final_images: List[str]=None):  # noqa: E501
+    def __init__(self, created_at: str=None, reasons: List[int]=None, project: List[int]=None, id_truck_license: int=None, id_driver: int=None, initial_gasoline: str=None, final_gasoline: str=None, initial_km: str=None, driver_companion: List[int]=None, route_point: str=None, observations: str=None, created_by: str=None, initial_images: List[str]=None, final_images: List[str]=None):  # noqa: E501
         """TechnicalData - a model defined in Swagger
 
         :param created_at: The created_at of this TechnicalData.  # noqa: E501
@@ -25,6 +25,8 @@ class TechnicalData(Model):
         :type project: List[int]
         :param id_truck_license: The id_truck_license of this TechnicalData.  # noqa: E501
         :type id_truck_license: int
+        :param id_driver: The id_driver of this TechnicalData.  # noqa: E501
+        :type id_driver: int
         :param initial_gasoline: The initial_gasoline of this TechnicalData.  # noqa: E501
         :type initial_gasoline: str
         :param final_gasoline: The final_gasoline of this TechnicalData.  # noqa: E501
@@ -49,6 +51,7 @@ class TechnicalData(Model):
             'reasons': List[int],
             'project': List[int],
             'id_truck_license': int,
+            'id_driver': int,
             'initial_gasoline': str,
             'final_gasoline': str,
             'initial_km': str,
@@ -65,6 +68,7 @@ class TechnicalData(Model):
             'reasons': 'reasons',
             'project': 'project',
             'id_truck_license': 'id_truck_license',
+            'id_driver': 'id_driver',
             'initial_gasoline': 'initial_gasoline',
             'final_gasoline': 'final_gasoline',
             'initial_km': 'initial_km',
@@ -79,6 +83,7 @@ class TechnicalData(Model):
         self._reasons = reasons
         self._project = project
         self._id_truck_license = id_truck_license
+        self._id_driver = id_driver
         self._initial_gasoline = initial_gasoline
         self._final_gasoline = final_gasoline
         self._initial_km = initial_km
@@ -183,6 +188,27 @@ class TechnicalData(Model):
         """
 
         self._id_truck_license = id_truck_license
+
+    @property
+    def id_driver(self) -> int:
+        """Gets the id_driver of this TechnicalData.
+
+
+        :return: The id_driver of this TechnicalData.
+        :rtype: int
+        """
+        return self._id_driver
+
+    @id_driver.setter
+    def id_driver(self, id_driver: int):
+        """Sets the id_driver of this TechnicalData.
+
+
+        :param id_driver: The id_driver of this TechnicalData.
+        :type id_driver: int
+        """
+
+        self._id_driver = id_driver
 
     @property
     def initial_gasoline(self) -> str:

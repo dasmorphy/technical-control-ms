@@ -253,7 +253,7 @@ CREATE TABLE technical.movilization_control
     CONSTRAINT movilization_control_driver_id_fkey FOREIGN KEY (driver_id)
         REFERENCES technical.vehicle_driver (id_driver) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON DELETE NO ACTION,
     CONSTRAINT movilization_control_license_id_fkey FOREIGN KEY (license_id)
         REFERENCES technical.vehicle_license (id_license) MATCH SIMPLE
         ON UPDATE NO ACTION

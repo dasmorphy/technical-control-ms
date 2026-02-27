@@ -14,8 +14,9 @@ from swagger_server.models.db.movilization_client import MovilizationClient
 from swagger_server.models.db.movilization_control import MovilizationControl
 from swagger_server.models.db.movilization_images import MovilizationImages
 from swagger_server.models.db.movilization_reason import MovilizationReason
+from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import cast, exists, func, select
+from sqlalchemy import cast, exists, func, select, text
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -28,6 +29,32 @@ class TechnicalRepository:
         self.db = PostgreSQLClient("POSTGRESQL")
 
 
+
+    def get_all_drivers(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(VehicleDriver)
+                )
+                drivers = [
+                    {
+                        "id_driver": c.id_driver,
+                        "name": c.name,
+                        "is_active": c.is_active,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+
     def post_technical_control(self, data, internal, external) -> None:
         saved_files = []
 
@@ -38,7 +65,7 @@ class TechnicalRepository:
             try:
 
                 movilization = MovilizationControl(
-                    driver_id=data.get('driver_id'),
+                    driver_id=data.get('id_driver'),
                     destiny=data.get('destiny'),
                     initial_km=data.get('initial_km'),
                     exit_point=data.get('route_point'),
