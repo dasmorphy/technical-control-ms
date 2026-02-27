@@ -239,8 +239,8 @@ CREATE TABLE technical.movilization_control
     license_id integer,
     initial_km text,
     final_km text,
-    exit_gasoline text,
-    arrival_gasoline text,
+    final_gasoline_id integer,
+    initial_gasoline_id integer,
     destiny text,
     exit_point text,
     driver_id integer,
@@ -256,6 +256,14 @@ CREATE TABLE technical.movilization_control
         ON DELETE NO ACTION,
     CONSTRAINT movilization_control_license_id_fkey FOREIGN KEY (license_id)
         REFERENCES technical.vehicle_license (id_license) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT movilization_control_final_gasoline_id_fkey FOREIGN KEY (id_level)
+        REFERENCES technical.level_gasoline (id_level) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT movilization_control_initial_gasoline_id_fkey FOREIGN KEY (id_level)
+        REFERENCES technical.level_gasoline (id_level) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )

@@ -14,7 +14,7 @@ class TechnicalData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, created_at: str=None, reasons: List[int]=None, project: List[int]=None, id_truck_license: int=None, id_driver: int=None, initial_gasoline: str=None, final_gasoline: str=None, initial_km: str=None, driver_companion: List[int]=None, route_point: str=None, observations: str=None, created_by: str=None, initial_images: List[str]=None, final_images: List[str]=None):  # noqa: E501
+    def __init__(self, created_at: str=None, reasons: List[int]=None, project: List[int]=None, id_truck_license: int=None, id_driver: int=None, initial_gasoline_id: int=None, final_gasoline_id: int=None, initial_km: str=None, final_km: str=None, driver_companion: List[int]=None, destiny: str=None, exit_point: str=None, observations: str=None, created_by: str=None, initial_images: List[str]=None, final_images: List[str]=None):  # noqa: E501
         """TechnicalData - a model defined in Swagger
 
         :param created_at: The created_at of this TechnicalData.  # noqa: E501
@@ -27,16 +27,20 @@ class TechnicalData(Model):
         :type id_truck_license: int
         :param id_driver: The id_driver of this TechnicalData.  # noqa: E501
         :type id_driver: int
-        :param initial_gasoline: The initial_gasoline of this TechnicalData.  # noqa: E501
-        :type initial_gasoline: str
-        :param final_gasoline: The final_gasoline of this TechnicalData.  # noqa: E501
-        :type final_gasoline: str
+        :param initial_gasoline_id: The initial_gasoline_id of this TechnicalData.  # noqa: E501
+        :type initial_gasoline_id: int
+        :param final_gasoline_id: The final_gasoline_id of this TechnicalData.  # noqa: E501
+        :type final_gasoline_id: int
         :param initial_km: The initial_km of this TechnicalData.  # noqa: E501
         :type initial_km: str
+        :param final_km: The final_km of this TechnicalData.  # noqa: E501
+        :type final_km: str
         :param driver_companion: The driver_companion of this TechnicalData.  # noqa: E501
         :type driver_companion: List[int]
-        :param route_point: The route_point of this TechnicalData.  # noqa: E501
-        :type route_point: str
+        :param destiny: The destiny of this TechnicalData.  # noqa: E501
+        :type destiny: str
+        :param exit_point: The exit_point of this TechnicalData.  # noqa: E501
+        :type exit_point: str
         :param observations: The observations of this TechnicalData.  # noqa: E501
         :type observations: str
         :param created_by: The created_by of this TechnicalData.  # noqa: E501
@@ -52,11 +56,13 @@ class TechnicalData(Model):
             'project': List[int],
             'id_truck_license': int,
             'id_driver': int,
-            'initial_gasoline': str,
-            'final_gasoline': str,
+            'initial_gasoline_id': int,
+            'final_gasoline_id': int,
             'initial_km': str,
+            'final_km': str,
             'driver_companion': List[int],
-            'route_point': str,
+            'destiny': str,
+            'exit_point': str,
             'observations': str,
             'created_by': str,
             'initial_images': List[str],
@@ -69,11 +75,13 @@ class TechnicalData(Model):
             'project': 'project',
             'id_truck_license': 'id_truck_license',
             'id_driver': 'id_driver',
-            'initial_gasoline': 'initial_gasoline',
-            'final_gasoline': 'final_gasoline',
+            'initial_gasoline_id': 'initial_gasoline_id',
+            'final_gasoline_id': 'final_gasoline_id',
             'initial_km': 'initial_km',
+            'final_km': 'final_km',
             'driver_companion': 'driver_companion',
-            'route_point': 'route_point',
+            'destiny': 'destiny',
+            'exit_point': 'exit_point',
             'observations': 'observations',
             'created_by': 'created_by',
             'initial_images': 'initial_images',
@@ -84,11 +92,13 @@ class TechnicalData(Model):
         self._project = project
         self._id_truck_license = id_truck_license
         self._id_driver = id_driver
-        self._initial_gasoline = initial_gasoline
-        self._final_gasoline = final_gasoline
+        self._initial_gasoline_id = initial_gasoline_id
+        self._final_gasoline_id = final_gasoline_id
         self._initial_km = initial_km
+        self._final_km = final_km
         self._driver_companion = driver_companion
-        self._route_point = route_point
+        self._destiny = destiny
+        self._exit_point = exit_point
         self._observations = observations
         self._created_by = created_by
         self._initial_images = initial_images
@@ -211,46 +221,46 @@ class TechnicalData(Model):
         self._id_driver = id_driver
 
     @property
-    def initial_gasoline(self) -> str:
-        """Gets the initial_gasoline of this TechnicalData.
+    def initial_gasoline_id(self) -> int:
+        """Gets the initial_gasoline_id of this TechnicalData.
 
 
-        :return: The initial_gasoline of this TechnicalData.
-        :rtype: str
+        :return: The initial_gasoline_id of this TechnicalData.
+        :rtype: int
         """
-        return self._initial_gasoline
+        return self._initial_gasoline_id
 
-    @initial_gasoline.setter
-    def initial_gasoline(self, initial_gasoline: str):
-        """Sets the initial_gasoline of this TechnicalData.
+    @initial_gasoline_id.setter
+    def initial_gasoline_id(self, initial_gasoline_id: int):
+        """Sets the initial_gasoline_id of this TechnicalData.
 
 
-        :param initial_gasoline: The initial_gasoline of this TechnicalData.
-        :type initial_gasoline: str
+        :param initial_gasoline_id: The initial_gasoline_id of this TechnicalData.
+        :type initial_gasoline_id: int
         """
 
-        self._initial_gasoline = initial_gasoline
+        self._initial_gasoline_id = initial_gasoline_id
 
     @property
-    def final_gasoline(self) -> str:
-        """Gets the final_gasoline of this TechnicalData.
+    def final_gasoline_id(self) -> int:
+        """Gets the final_gasoline_id of this TechnicalData.
 
 
-        :return: The final_gasoline of this TechnicalData.
-        :rtype: str
+        :return: The final_gasoline_id of this TechnicalData.
+        :rtype: int
         """
-        return self._final_gasoline
+        return self._final_gasoline_id
 
-    @final_gasoline.setter
-    def final_gasoline(self, final_gasoline: str):
-        """Sets the final_gasoline of this TechnicalData.
+    @final_gasoline_id.setter
+    def final_gasoline_id(self, final_gasoline_id: int):
+        """Sets the final_gasoline_id of this TechnicalData.
 
 
-        :param final_gasoline: The final_gasoline of this TechnicalData.
-        :type final_gasoline: str
+        :param final_gasoline_id: The final_gasoline_id of this TechnicalData.
+        :type final_gasoline_id: int
         """
 
-        self._final_gasoline = final_gasoline
+        self._final_gasoline_id = final_gasoline_id
 
     @property
     def initial_km(self) -> str:
@@ -274,6 +284,27 @@ class TechnicalData(Model):
         self._initial_km = initial_km
 
     @property
+    def final_km(self) -> str:
+        """Gets the final_km of this TechnicalData.
+
+
+        :return: The final_km of this TechnicalData.
+        :rtype: str
+        """
+        return self._final_km
+
+    @final_km.setter
+    def final_km(self, final_km: str):
+        """Sets the final_km of this TechnicalData.
+
+
+        :param final_km: The final_km of this TechnicalData.
+        :type final_km: str
+        """
+
+        self._final_km = final_km
+
+    @property
     def driver_companion(self) -> List[int]:
         """Gets the driver_companion of this TechnicalData.
 
@@ -295,25 +326,46 @@ class TechnicalData(Model):
         self._driver_companion = driver_companion
 
     @property
-    def route_point(self) -> str:
-        """Gets the route_point of this TechnicalData.
+    def destiny(self) -> str:
+        """Gets the destiny of this TechnicalData.
 
 
-        :return: The route_point of this TechnicalData.
+        :return: The destiny of this TechnicalData.
         :rtype: str
         """
-        return self._route_point
+        return self._destiny
 
-    @route_point.setter
-    def route_point(self, route_point: str):
-        """Sets the route_point of this TechnicalData.
+    @destiny.setter
+    def destiny(self, destiny: str):
+        """Sets the destiny of this TechnicalData.
 
 
-        :param route_point: The route_point of this TechnicalData.
-        :type route_point: str
+        :param destiny: The destiny of this TechnicalData.
+        :type destiny: str
         """
 
-        self._route_point = route_point
+        self._destiny = destiny
+
+    @property
+    def exit_point(self) -> str:
+        """Gets the exit_point of this TechnicalData.
+
+
+        :return: The exit_point of this TechnicalData.
+        :rtype: str
+        """
+        return self._exit_point
+
+    @exit_point.setter
+    def exit_point(self, exit_point: str):
+        """Sets the exit_point of this TechnicalData.
+
+
+        :param exit_point: The exit_point of this TechnicalData.
+        :type exit_point: str
+        """
+
+        self._exit_point = exit_point
 
     @property
     def observations(self) -> str:

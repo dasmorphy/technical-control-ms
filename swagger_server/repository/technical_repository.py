@@ -10,11 +10,16 @@ import os
 from loguru import logger
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
+from swagger_server.models.db.client_projects import ClientProject
+from swagger_server.models.db.level_gasoline import LevelGasoline
 from swagger_server.models.db.movilization_client import MovilizationClient
 from swagger_server.models.db.movilization_control import MovilizationControl
 from swagger_server.models.db.movilization_images import MovilizationImages
 from swagger_server.models.db.movilization_reason import MovilizationReason
+from swagger_server.models.db.reasons_movilization import ReasonsMovilization
+from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
+from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
 from sqlalchemy import cast, exists, func, select, text
 
@@ -53,6 +58,130 @@ class TechnicalRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_all_licenses(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(VehicleLicense)
+                )
+                drivers = [
+                    {
+                        "id_license": c.id_license,
+                        "name": c.name,
+                        "is_active": c.is_active,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+    
+    def get_all_reasons(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(ReasonsMovilization)
+                )
+                drivers = [
+                    {
+                        "id_reason": c.id_reason,
+                        "name": c.name,
+                        "is_active": c.is_active,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+    def get_all_copilot(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(VehicleCopilot)
+                )
+                drivers = [
+                    {
+                        "id_copilot": c.id_copilot,
+                        "name": c.name,
+                        "is_active": c.is_active,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+    
+    def get_all_projects(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(ClientProject)
+                )
+                drivers = [
+                    {
+                        "id_client_projects": c.id_client_projects,
+                        "name": c.name,
+                        "is_active": c.is_active,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_all_level_gasoline(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(LevelGasoline)
+                )
+                drivers = [
+                    {
+                        "id_level": c.id_level,
+                        "name": c.name,
+                        "is_active": c.is_active,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
 
 
     def post_technical_control(self, data, internal, external) -> None:
@@ -71,7 +200,7 @@ class TechnicalRepository:
                     exit_point=data.get('route_point'),
                     observations=data.get('observations'),
                     license_id=data.get('id_truck_license'),
-                    initial_gasoline=data.get('initial_gasoline'),
+                    initial_gasoline_id=data.get('initial_gasoline'),
                 )
 
                 session.add(movilization)
@@ -106,7 +235,7 @@ class TechnicalRepository:
 
                     session.add(image)
 
-                return
+                session.commit()
                 # category_exists = session.execute(
                 #     select(
                 #         exists().where(

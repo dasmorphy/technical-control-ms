@@ -11,7 +11,7 @@ from swagger_server.models.db import Base
 
 
 class ClientProject(Base):
-    __tablename__ = "client_project"
+    __tablename__ = "client_projects"
     __table_args__ = {"schema": "technical"}
 
     id_client_projects = Column(

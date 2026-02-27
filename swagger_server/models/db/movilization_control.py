@@ -38,9 +38,15 @@ class MovilizationControl(Base):
 
     final_km = Column(Text)
 
-    final_gasoline = Column(Text)
+    final_gasoline_id = Column(
+        Integer,
+        ForeignKey("technical.level_gasoline.id_level")
+    )
 
-    initial_gasoline = Column(Text)
+    initial_gasoline_id = Column(
+        Integer,
+        ForeignKey("technical.level_gasoline.id_level")
+    )
 
     destiny = Column(Text)
 
