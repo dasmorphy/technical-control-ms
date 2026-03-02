@@ -11,6 +11,7 @@ from swagger_server.models.db.movilization_control import MovilizationControl
 from swagger_server.models.db.movilization_copilot import MovilizationCopilot
 from swagger_server.models.db.movilization_images import MovilizationImages
 from swagger_server.models.db.movilization_reason import MovilizationReason
+from swagger_server.models.db.movilization_status import MovilizationStatus
 from swagger_server.models.db.reasons_movilization import ReasonsMovilization
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
@@ -193,6 +194,7 @@ class TechnicalRepository:
                 dvh = VehicleDriver
                 lvh = VehicleLicense
                 gsl = LevelGasoline
+                sts = MovilizationStatus
                 
                 gsl_initial = aliased(gsl)
                 gsl_final = aliased(gsl)
@@ -243,6 +245,7 @@ class TechnicalRepository:
                         gsl_initial.name.label("name_gasoline_initial"),
                         gsl_final.name.label("name_gasoline_final"),
                         lvh.name.label("license"),
+                        sts.name.label("name_status"),
                         func.coalesce(
                             func.array_agg(mimg.image_path)
                                 .filter(mimg.image_path.isnot(None)),
@@ -252,6 +255,7 @@ class TechnicalRepository:
                     .outerjoin(mcc, mcc.movilization_id == mvc.id_movilization)
                     .outerjoin(dvh, dvh.id_driver == mvc.driver_id)
                     .outerjoin(lvh, lvh.id_license == mvc.license_id)
+                    .outerjoin(sts, sts.id_status == mvc.status)
                     .outerjoin(gsl_final, gsl_final.id_level == mvc.final_gasoline_id)
                     .outerjoin(gsl_initial, gsl_initial.id_level == mvc.initial_gasoline_id)
                     .outerjoin(mvr, mvr.movilization_id == mvc.id_movilization)
@@ -268,6 +272,7 @@ class TechnicalRepository:
                         dvh.name,
                         gsl_initial.name,
                         gsl_final.name,
+                        sts.name,
                         lvh.name,
                         mvc.created_at,
                     )
