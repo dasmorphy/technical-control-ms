@@ -58,8 +58,8 @@ class TechnicalView(MethodView):
                 response["external_transaction_id"] = external_transaction_id
                 message = f"start request: {function_name}, channel: {technical_dict['channel']}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
-                files = request.files.getlist("images")
-                self.technical_use_case.post_technical_control(technical_dict, internal_transaction_id, external_transaction_id)
+                files = request.files.getlist("initial_images")
+                self.technical_use_case.post_technical_control(technical_dict, files, internal_transaction_id, external_transaction_id)
                 response["error_code"] = 0
                 response["message"] = "Control técnico creado correctamente"
                 end_time = default_timer()

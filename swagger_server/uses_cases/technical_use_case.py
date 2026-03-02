@@ -7,10 +7,10 @@ class TechnicalUseCase:
     def __init__(self, technical_control_repository: TechnicalRepository):
         self.technical_control_repository = technical_control_repository
 
-    def post_technical_control(self, body, internal, external) -> None:
+    def post_technical_control(self, body, images, internal, external) -> None:
         
 
-        self.technical_control_repository.post_technical_control(body, internal, external)
+        self.technical_control_repository.post_technical_control(body, images, internal, external)
 
     def get_all_drivers(self, internal, external):
         return self.technical_control_repository.get_all_drivers(internal, external)

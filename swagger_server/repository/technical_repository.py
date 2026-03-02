@@ -1,10 +1,3 @@
-
-
-
-
-
-
-
 import os
 
 from loguru import logger
@@ -232,10 +225,10 @@ class TechnicalRepository:
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
 
 
-    def post_technical_control(self, data, internal, external) -> None:
+    def post_technical_control(self, data, images, internal, external) -> None:
         saved_files = []
 
-        if data.get('initial_images') and len(data.get('initial_images')) > 10:
+        if images and len(images) > 10:
             raise CustomAPIException("Máximo 10 imagenes", 500)
 
         with self.db.session_factory() as session:
@@ -278,7 +271,7 @@ class TechnicalRepository:
                     session.add(copilot)
 
                 #Guardar imágenes (máx 10)
-                for file in data.get('initial_images')[:10]:
+                for file in images[:10]:
                     result = self.save_image(file)
                     saved_files.append(result["url"])
 
