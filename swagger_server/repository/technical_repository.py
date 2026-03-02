@@ -14,6 +14,7 @@ from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.level_gasoline import LevelGasoline
 from swagger_server.models.db.movilization_client import MovilizationClient
 from swagger_server.models.db.movilization_control import MovilizationControl
+from swagger_server.models.db.movilization_copilot import MovilizationCopilot
 from swagger_server.models.db.movilization_images import MovilizationImages
 from swagger_server.models.db.movilization_reason import MovilizationReason
 from swagger_server.models.db.reasons_movilization import ReasonsMovilization
@@ -21,7 +22,7 @@ from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import cast, exists, func, select, text
+from sqlalchemy import JSON, cast, distinct, exists, func, select, text
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -182,6 +183,53 @@ class TechnicalRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_all_tech_control(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                mvc = MovilizationControl
+                mcc = MovilizationClient
+                mvr = MovilizationReason
+                mctr = MovilizationCopilot
+
+                clients_agg = func.coalesce(
+                    func.json_agg(func.distinct(mcc.__table__.table_valued())).filter(mcc.movilization_id != None),
+                    func.cast('[]', JSON)
+                ).label("clients")
+
+                reasons_agg = func.coalesce(
+                    func.json_agg(func.distinct(mvr.__table__.table_valued())).filter(mvr.movilization_id != None),
+                    func.cast('[]', JSON)
+                ).label("reasons")
+
+                copilots_agg = func.coalesce(
+                    func.json_agg(func.distinct(mctr.__table__.table_valued())).filter(mctr.movilization_id != None),
+                    func.cast('[]', JSON)
+                ).label("copilots")
+
+                query = (
+                    session.query(
+                        mvc,
+                        clients_agg,
+                        reasons_agg,
+                        copilots_agg,
+                    )
+                    .outerjoin(mcc, mcc.movilization_id == mvc.id_movilization)
+                    .outerjoin(mvr, mvr.movilization_id == mvc.id_movilization)
+                    .outerjoin(mctr, mctr.movilization_id == mvc.id_movilization)
+                    .group_by(mvc.id_movilization)
+                )
+                result = session.execute(query).all()
+
+                return result
+
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
 
 
     def post_technical_control(self, data, internal, external) -> None:
@@ -221,6 +269,13 @@ class TechnicalRepository:
                         reason_id=id_reason
                     )
                     session.add(reason)
+                
+                for id_copilot in data.get('driver_companion'):
+                    copilot = MovilizationCopilot(
+                        movilization_id=movilization_id,
+                        copilot_id=id_copilot
+                    )
+                    session.add(copilot)
 
                 #Guardar imágenes (máx 10)
                 for file in data.get('initial_images')[:10]:

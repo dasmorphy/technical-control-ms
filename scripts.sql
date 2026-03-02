@@ -234,8 +234,8 @@ ALTER TABLE IF EXISTS technical.vehicle_copilot
 CREATE TABLE technical.movilization_control
 (
     id_movilization integer NOT NULL DEFAULT 1,
-    exit_date time without time zone,
-    arrival_date time without time zone DEFAULT now(),
+    exit_date timestamp without time zone,
+    arrival_date timestamp without time zone DEFAULT now(),
     license_id integer,
     initial_km text,
     final_km text,
@@ -245,8 +245,8 @@ CREATE TABLE technical.movilization_control
     exit_point text,
     driver_id integer,
     observations text,
-    created_at time without time zone DEFAULT now(),
-    updated_at time without time zone DEFAULT now(),
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
     created_by text,
     updated_by text,
     CONSTRAINT movilization_control_pkey PRIMARY KEY (id_movilization),
@@ -424,4 +424,49 @@ ALTER SEQUENCE technical.movilization_reason_id_seq
 
 ALTER TABLE IF EXISTS technical.movilization_reason
     ALTER COLUMN id_movilization_reason SET DEFAULT nextval('technical.movilization_reason_id_seq'::regclass);
+
+
+--------------------------------------------------------------------------------------------------------------------------
+
+
+CREATE TABLE technical.movilization_copilot
+(
+    id_movilization_copilot integer NOT NULL DEFAULT 1,
+    movilization_id integer NOT NULL,
+    copilot_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT movilization_copilot_pkey PRIMARY KEY (id_movilization_copilot),
+    CONSTRAINT movilization_control_id_fkey FOREIGN KEY (movilization_id)
+        REFERENCES technical.movilization_control (id_movilization) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT copilot_id_fkey FOREIGN KEY (copilot_id)
+        REFERENCES technical.vehicle_copilot (id_copilot) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.movilization_copilot
+    OWNER to n8n_user;
+
+
+CREATE SEQUENCE technical.movilization_copilot_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.movilization_copilot_id_seq
+    OWNED BY technical.movilization_copilot.id_movilization_copilot;
+
+ALTER SEQUENCE technical.movilization_copilot_id_seq
+    OWNER TO n8n_user;
+
+
+
+ALTER TABLE IF EXISTS technical.movilization_copilot
+    ALTER COLUMN id_movilization_copilot SET DEFAULT nextval('technical.movilization_copilot_id_seq'::regclass);
 

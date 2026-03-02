@@ -22,10 +22,10 @@ class MovilizationControl(Base):
         nullable=False
     )
 
-    exit_date = Column(Time)
+    exit_date = Column(DateTime)
 
     arrival_date = Column(
-        Time,
+        DateTime,
         server_default=func.now()
     )
 
@@ -60,12 +60,12 @@ class MovilizationControl(Base):
     observations = Column(Text)
 
     created_at = Column(
-        Time,
+        DateTime,
         server_default=func.now()
     )
 
     updated_at = Column(
-        Time,
+        DateTime,
         server_default=func.now(),
         onupdate=func.now()
     )

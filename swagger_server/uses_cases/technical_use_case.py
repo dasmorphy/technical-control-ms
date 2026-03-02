@@ -29,3 +29,31 @@ class TechnicalUseCase:
     
     def get_all_level_gasoline(self, internal, external):
         return self.technical_control_repository.get_all_level_gasoline(internal, external)
+    
+    def get_all_tech_control(self, internal, external):
+        rows = self.technical_control_repository.get_all_tech_control(internal, external)
+
+        results = [
+            {
+                "exit_date": mvc.exit_date,
+                "arrival_date": mvc.arrival_date,
+                "license_id": mvc.license_id,
+                "initial_km": mvc.initial_km,
+                "final_km": mvc.final_km,
+                "final_gasoline_id": mvc.final_gasoline_id,
+                "initial_gasoline_id": mvc.initial_gasoline_id,
+                "destiny": mvc.destiny,
+                "exit_point": mvc.exit_point,
+                "clients": clients,
+                "reasons": reasons,
+                "copilots": copilots,
+                "created_at": mvc.created_at,
+                "updated_at": mvc.updated_at,
+                "created_by": mvc.created_by,
+                "updated_by": mvc.updated_by,
+            }
+            for mvc, clients, reasons, copilots in rows  # desempaquetar tupla
+        ]
+        
+        return results
+
