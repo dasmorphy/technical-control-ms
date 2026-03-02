@@ -1,6 +1,7 @@
 import os
 
 from loguru import logger
+from sqlalchemy.orm import aliased
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.db.client_projects import ClientProject
@@ -185,19 +186,50 @@ class TechnicalRepository:
                 mcc = MovilizationClient
                 mvr = MovilizationReason
                 mctr = MovilizationCopilot
+                mimg = MovilizationImages
+                cp = ClientProject
+                rs = ReasonsMovilization
+                cpt= VehicleCopilot
+                dvh = VehicleDriver
+                lvh = VehicleLicense
+                gsl = LevelGasoline
+                
+                gsl_initial = aliased(gsl)
+                gsl_final = aliased(gsl)
 
                 clients_agg = func.coalesce(
-                    func.json_agg(func.distinct(mcc.__table__.table_valued())).filter(mcc.movilization_id != None),
+                    func.json_agg(
+                        func.distinct(
+                            func.jsonb_build_object(
+                                "id", cp.id_client_projects,
+                                "name", cp.name
+                            )
+                        )
+                    ).filter(cp.id_client_projects != None),
                     func.cast('[]', JSON)
                 ).label("clients")
 
                 reasons_agg = func.coalesce(
-                    func.json_agg(func.distinct(mvr.__table__.table_valued())).filter(mvr.movilization_id != None),
+                    func.json_agg(
+                        func.distinct(
+                            func.jsonb_build_object(
+                                "id", rs.id_reason,
+                                "name", rs.name
+                            )
+                        )
+                    ).filter(rs.id_reason != None),
                     func.cast('[]', JSON)
                 ).label("reasons")
 
                 copilots_agg = func.coalesce(
-                    func.json_agg(func.distinct(mctr.__table__.table_valued())).filter(mctr.movilization_id != None),
+                    func.json_agg(
+                        func.distinct(
+                            func.jsonb_build_object(
+                                "id", cpt.id_copilot,
+                                "name", cpt.name
+                            )
+                        )
+                    ).filter(cpt.id_copilot != None),
                     func.cast('[]', JSON)
                 ).label("copilots")
 
@@ -207,11 +239,39 @@ class TechnicalRepository:
                         clients_agg,
                         reasons_agg,
                         copilots_agg,
+                        dvh.name.label("name_driver"),
+                        gsl_initial.name.label("name_gasoline_initial"),
+                        gsl_final.name.label("name_gasoline_final"),
+                        lvh.name.label("license"),
+                        func.coalesce(
+                            func.array_agg(mimg.image_path)
+                                .filter(mimg.image_path.isnot(None)),
+                            []
+                        ).label("images")
                     )
                     .outerjoin(mcc, mcc.movilization_id == mvc.id_movilization)
+                    .outerjoin(dvh, dvh.id_driver == mvc.driver_id)
+                    .outerjoin(lvh, lvh.id_license == mvc.license_id)
+                    .outerjoin(gsl_final, gsl_final.id_level == mvc.final_gasoline_id)
+                    .outerjoin(gsl_initial, gsl_initial.id_level == mvc.initial_gasoline_id)
                     .outerjoin(mvr, mvr.movilization_id == mvc.id_movilization)
                     .outerjoin(mctr, mctr.movilization_id == mvc.id_movilization)
-                    .group_by(mvc.id_movilization)
+                    .outerjoin(cp, cp.id_client_projects == mcc.client_project_id)
+                    .outerjoin(rs, rs.id_reason == mvr.reason_id)
+                    .outerjoin(cpt, cpt.id_copilot == mctr.copilot_id)
+                    .outerjoin(
+                        mimg,
+                        mimg.movilization_id == mvc.id_movilization
+                    )
+                    .group_by(
+                        mvc.id_movilization,
+                        dvh.name,
+                        gsl_initial.name,
+                        gsl_final.name,
+                        lvh.name,
+                        mvc.created_at,
+                    )
+                    .order_by(mvc.created_at.desc())
                 )
                 result = session.execute(query).all()
 
@@ -241,7 +301,8 @@ class TechnicalRepository:
                     exit_point=data.get('route_point'),
                     observations=data.get('observations'),
                     license_id=data.get('id_truck_license'),
-                    initial_gasoline_id=data.get('initial_gasoline'),
+                    initial_gasoline_id=data.get('initial_gasoline_id'),
+                    status=1
                 )
 
                 session.add(movilization)

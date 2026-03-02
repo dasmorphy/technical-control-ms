@@ -51,8 +51,13 @@ class TechnicalUseCase:
                 "updated_at": mvc.updated_at,
                 "created_by": mvc.created_by,
                 "updated_by": mvc.updated_by,
+                "images": images,
+                "name_driver": name_driver,
+                "name_gasoline_final": name_gasoline_final,
+                "name_gasoline_initial": name_gasoline_initial,
+                "license": license
             }
-            for mvc, clients, reasons, copilots in rows  # desempaquetar tupla
+            for mvc, clients, reasons, copilots, name_driver, name_gasoline_initial, name_gasoline_final, license, images in rows  # desempaquetar tupla
         ]
         
         return results

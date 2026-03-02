@@ -57,6 +57,11 @@ class MovilizationControl(Base):
         ForeignKey("technical.vehicle_driver.id_driver")
     )
 
+    status = Column(
+        Integer,
+        ForeignKey("technical.movilization_status.id_status")
+    )
+
     observations = Column(Text)
 
     created_at = Column(

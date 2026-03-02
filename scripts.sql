@@ -249,6 +249,7 @@ CREATE TABLE technical.movilization_control
     updated_at timestamp without time zone DEFAULT now(),
     created_by text,
     updated_by text,
+    status integer,
     CONSTRAINT movilization_control_pkey PRIMARY KEY (id_movilization),
     CONSTRAINT movilization_control_driver_id_fkey FOREIGN KEY (driver_id)
         REFERENCES technical.vehicle_driver (id_driver) MATCH SIMPLE
@@ -265,7 +266,11 @@ CREATE TABLE technical.movilization_control
     CONSTRAINT movilization_control_initial_gasoline_id_fkey FOREIGN KEY (id_level)
         REFERENCES technical.level_gasoline (id_level) MATCH SIMPLE
         ON UPDATE NO ACTION
-        ON DELETE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT movilization_control_status_id_fkey FOREIGN KEY (id_status)
+        REFERENCES technical.movilization_status (id_status) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
 )
 
 TABLESPACE pg_default;
@@ -470,3 +475,38 @@ ALTER SEQUENCE technical.movilization_copilot_id_seq
 ALTER TABLE IF EXISTS technical.movilization_copilot
     ALTER COLUMN id_movilization_copilot SET DEFAULT nextval('technical.movilization_copilot_id_seq'::regclass);
 
+
+---------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.movilization_status
+(
+    id_status integer NOT NULL DEFAULT 1,
+    name integer NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    updated_by text,
+    CONSTRAINT movilization_status_pkey PRIMARY KEY (id_status)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.movilization_status
+    OWNER to n8n_user;
+
+
+CREATE SEQUENCE technical.movilization_status_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.movilization_status_id_seq
+    OWNED BY technical.movilization_status.id_status;
+
+ALTER SEQUENCE technical.movilization_status_id_seq
+    OWNER TO n8n_user;
+
+ALTER TABLE IF EXISTS technical.movilization_status
+    ALTER COLUMN id_status SET DEFAULT nextval('technical.movilization_status_id_seq'::regclass);
