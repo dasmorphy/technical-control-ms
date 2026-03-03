@@ -57,10 +57,9 @@ class TechnicalUseCase:
                 "name_gasoline_initial": row[19],
                 "final_gasoline_id": row[20],
                 "name_gasoline_final": row[21],
-                "license_id": row[21],
-                "license": row[22],
-                "name_status": row[23],
-
+                "license_id": row[22],
+                "license": row[23],
+                "name_status": row[24],
             }
             for row in rows  # desempaquetar tupla
         ]
