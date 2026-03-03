@@ -17,7 +17,7 @@ from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import JSON, cast, distinct, exists, func, select, text
+from sqlalchemy import ARRAY, JSON, Text, cast, distinct, exists, func, select, text
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -190,69 +190,74 @@ class TechnicalRepository:
                 mimg = MovilizationImages
                 cp = ClientProject
                 rs = ReasonsMovilization
-                cpt= VehicleCopilot
+                cpt = VehicleCopilot
                 dvh = VehicleDriver
                 lvh = VehicleLicense
                 gsl = LevelGasoline
                 sts = MovilizationStatus
-                
+
                 gsl_initial = aliased(gsl)
                 gsl_final = aliased(gsl)
 
-                clients_agg = func.coalesce(
-                    func.json_agg(
-                        func.distinct(
-                            func.jsonb_build_object(
-                                "id", cp.id_client_projects,
-                                "name", cp.name
-                            )
-                        )
-                    ).filter(cp.id_client_projects != None),
-                    func.cast('[]', JSON)
+                def json_agg_filtered(build_obj, filter_col):
+                    return func.coalesce(
+                        func.json_agg(
+                            func.distinct(build_obj)
+                        ).filter(filter_col.isnot(None)),
+                        func.cast('[]', JSON)
+                    )
+
+                clients_agg = json_agg_filtered(
+                    func.jsonb_build_object("id", cp.id_client_projects, "name", cp.name),
+                    cp.id_client_projects
                 ).label("clients")
 
-                reasons_agg = func.coalesce(
-                    func.json_agg(
-                        func.distinct(
-                            func.jsonb_build_object(
-                                "id", rs.id_reason,
-                                "name", rs.name
-                            )
-                        )
-                    ).filter(rs.id_reason != None),
-                    func.cast('[]', JSON)
+                reasons_agg = json_agg_filtered(
+                    func.jsonb_build_object("id", rs.id_reason, "name", rs.name),
+                    rs.id_reason
                 ).label("reasons")
 
-                copilots_agg = func.coalesce(
-                    func.json_agg(
-                        func.distinct(
-                            func.jsonb_build_object(
-                                "id", cpt.id_copilot,
-                                "name", cpt.name
-                            )
-                        )
-                    ).filter(cpt.id_copilot != None),
-                    func.cast('[]', JSON)
+                copilots_agg = json_agg_filtered(
+                    func.jsonb_build_object("id", cpt.id_copilot, "name", cpt.name),
+                    cpt.id_copilot
                 ).label("copilots")
+
+                # Imágenes inline en vez de subquery separada
+                images_agg = func.coalesce(
+                    func.array_agg(func.distinct(mimg.image_path)).filter(mimg.image_path.isnot(None)),
+                    func.cast([], ARRAY(Text))
+                ).label("images")
 
                 query = (
                     session.query(
-                        mvc,
+                        mvc.id_movilization,
+                        mvc.exit_date,
+                        mvc.arrival_date,
+                        mvc.initial_km,
+                        mvc.final_km,
+                        mvc.destiny,
+                        mvc.exit_point,
+                        mvc.observations,
+                        mvc.status,
+                        mvc.created_at,
+                        mvc.updated_at,
+                        mvc.created_by,
+                        mvc.updated_by,
                         clients_agg,
                         reasons_agg,
                         copilots_agg,
+                        images_agg,
                         dvh.name.label("name_driver"),
+                        mvc.initial_gasoline_id,
                         gsl_initial.name.label("name_gasoline_initial"),
+                        mvc.final_gasoline_id,
                         gsl_final.name.label("name_gasoline_final"),
+                        mvc.license_id,
                         lvh.name.label("license"),
                         sts.name.label("name_status"),
-                        func.coalesce(
-                            func.array_agg(mimg.image_path)
-                                .filter(mimg.image_path.isnot(None)),
-                            []
-                        ).label("images")
                     )
                     .outerjoin(mcc, mcc.movilization_id == mvc.id_movilization)
+                    .outerjoin(mimg, mimg.movilization_id == mvc.id_movilization)
                     .outerjoin(dvh, dvh.id_driver == mvc.driver_id)
                     .outerjoin(lvh, lvh.id_license == mvc.license_id)
                     .outerjoin(sts, sts.id_status == mvc.status)
@@ -263,10 +268,7 @@ class TechnicalRepository:
                     .outerjoin(cp, cp.id_client_projects == mcc.client_project_id)
                     .outerjoin(rs, rs.id_reason == mvr.reason_id)
                     .outerjoin(cpt, cpt.id_copilot == mctr.copilot_id)
-                    .outerjoin(
-                        mimg,
-                        mimg.movilization_id == mvc.id_movilization
-                    )
+                    # GROUP BY solo por la PK — PostgreSQL infiere el resto
                     .group_by(
                         mvc.id_movilization,
                         dvh.name,
@@ -274,19 +276,16 @@ class TechnicalRepository:
                         gsl_final.name,
                         sts.name,
                         lvh.name,
-                        mvc.created_at,
                     )
                     .order_by(mvc.created_at.desc())
                 )
-                result = session.execute(query).all()
 
-                return result
+                return query.all()  # usar .all() directamente
 
             except Exception as exception:
                 logger.error('Error: {}', str(exception), internal=internal, external=external)
                 if isinstance(exception, CustomAPIException):
                     raise exception
-                
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
 
 

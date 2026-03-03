@@ -35,32 +35,34 @@ class TechnicalUseCase:
 
         results = [
             {
-                "exit_date": mvc.exit_date,
-                "arrival_date": mvc.arrival_date,
-                "license_id": mvc.license_id,
-                "initial_km": mvc.initial_km,
-                "final_km": mvc.final_km,
-                "final_gasoline_id": mvc.final_gasoline_id,
-                "initial_gasoline_id": mvc.initial_gasoline_id,
-                "destiny": mvc.destiny,
-                "exit_point": mvc.exit_point,
-                "clients": clients,
-                "reasons": reasons,
-                "copilots": copilots,
-                "created_at": mvc.created_at,
-                "updated_at": mvc.updated_at,
-                "created_by": mvc.created_by,
-                "updated_by": mvc.updated_by,
-                "status_id": mvc.status,
-                "name_status": name_status,
-                "images": images,
-                "name_driver": name_driver,
-                "name_gasoline_final": name_gasoline_final,
-                "name_gasoline_initial": name_gasoline_initial,
-                "license": license
+                "id_movilization": row[0],
+                "exit_date": row[1],
+                "arrival_date": row[2],
+                "initial_km": row[3],
+                "final_km": row[4],
+                "destiny": row[5],
+                "exit_point": row[6],
+                "observations": row[7],
+                "status_id": row[8],
+                "created_at": row[9],
+                "updated_at": row[10],
+                "created_by": row[11],
+                "updated_by": row[12],
+                "clients": row[13],
+                "reasons": row[14],
+                "copilots": row[15],
+                "images": row[16],
+                "name_driver": row[17],
+                "initial_gasoline_id": row[18],
+                "name_gasoline_initial": row[19],
+                "final_gasoline_id": row[20],
+                "name_gasoline_final": row[21],
+                "license_id": row[21],
+                "license": row[22],
+                "name_status": row[23],
+
             }
-            for mvc, clients, reasons, copilots, name_driver, name_gasoline_initial, 
-            name_gasoline_final, license, name_status, images in rows  # desempaquetar tupla
+            for row in rows  # desempaquetar tupla
         ]
         
         return results
