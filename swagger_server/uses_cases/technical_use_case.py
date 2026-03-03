@@ -12,6 +12,9 @@ class TechnicalUseCase:
 
         self.technical_control_repository.post_technical_control(body, images, internal, external)
 
+    def put_technical_control(self, body, images, internal, external) -> None:
+        self.technical_control_repository.put_technical_control(body, images, internal, external)
+
     def get_all_drivers(self, internal, external):
         return self.technical_control_repository.get_all_drivers(internal, external)
     

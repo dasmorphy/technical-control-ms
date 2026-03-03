@@ -242,6 +242,8 @@ CREATE TABLE technical.movilization_control
     final_gasoline_id integer,
     initial_gasoline_id integer,
     destiny text,
+    detail_incident text,
+    have_incident boolean DEFAULT FALSE,
     exit_point text,
     driver_id integer,
     observations text,

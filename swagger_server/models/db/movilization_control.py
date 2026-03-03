@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    Boolean,
     Column,
     Integer,
     Text,
@@ -61,6 +62,10 @@ class MovilizationControl(Base):
         Integer,
         ForeignKey("technical.movilization_status.id_status")
     )
+
+    have_incident = Column(Boolean, default=False)
+
+    detail_incident = Column(Text)
 
     observations = Column(Text)
 

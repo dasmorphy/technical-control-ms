@@ -321,7 +321,7 @@ paths:
   /get/all-technical-control:
     get:
       tags:
-      - Catalogs
+      - Technical
       summary: Obtiene todos los controles tecnicos
       description: Devuelve todos los cotroles tecnicos de la base
       operationId: get_all_tech_control
@@ -338,6 +338,50 @@ paths:
           schema:
             type: string
             example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /update/technical-control:
+    put:
+      tags:
+      - Technical
+      summary: Actualiza el control tecnico en la base de datos.
+      description: Actualiza de control tecnico de ingreso
+      operationId: put_technical
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/RequestPutTechnicalControl"
       responses:
         "200":
           description: OK
@@ -426,6 +470,16 @@ components:
         externalTransactionId:
           type: string
           example: fcea920f7412b5da7be0cf42b8c93759
+    RequestPutTechnicalControl:
+      properties:
+        technical_data:
+          $ref: "#/components/schemas/TechnicalPutData"
+        channel:
+          type: string
+          example: Tech control
+        externalTransactionId:
+          type: string
+          example: fcea920f7412b5da7be0cf42b8c93759
     TechnicalData:
       type: object
       properties:
@@ -505,6 +559,42 @@ components:
         initial_images: []
         final_images: []
         created_by: dmales
+    TechnicalPutData:
+      type: object
+      properties:
+        id_movilization:
+          type: integer
+          example: 1
+          nullable: false
+        final_gasoline_id:
+          type: integer
+          example: 2
+        final_km:
+          type: string
+          example: "1"
+        have_incident:
+          type: boolean
+          example: true
+        detail_incident:
+          type: string
+          example: "N/A"
+        exit_date:
+          type: string
+          example: 2022-02-03 13:58:00
+        final_images:
+          maxItems: 10
+          type: array
+          items:
+            type: string
+            format: binary
+      example:
+        id_movilization: 4
+        final_gasoline_id: 4
+        final_km: "155"
+        have_incident: true
+        detail_incident: "N/A"
+        exit_date: "2022-02-03 13:58:00"
+        final_images: []
     GenericResponse:
       properties:
         data:

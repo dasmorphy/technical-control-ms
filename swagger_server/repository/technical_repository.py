@@ -449,6 +449,72 @@ class TechnicalRepository:
 
 
 
+    def put_technical_control(self, data, images, internal, external) -> None:
+        saved_files = []
+
+        if images and len(images) > 10:
+            raise CustomAPIException("Máximo 10 imagenes", 500)
+
+        with self.db.session_factory() as session:
+            try:
+                movilization_exists = session.execute(
+                    select(MovilizationControl).where(
+                        MovilizationControl.id_movilization == data.get('id_movilization')
+                    )
+                ).scalar_one_or_none()
+
+                if not movilization_exists:
+                    raise CustomAPIException(
+                        message="No existe el registro de control técnico",
+                        status_code=404
+                    )
+
+                movilization = MovilizationControl(
+                    final_gasoline_id=data.get("final_gasoline_id"),
+                    final_km=data.get("final_km"),
+                    have_incident=data.get("have_incident"),
+
+                    status=2
+                )
+
+                session.add(movilization)
+
+                movilization_id = movilization.id_movilization
+
+                #Guardar imágenes (máx 10)
+                for file in images[:10]:
+                    result = self.save_image(file)
+                    saved_files.append(result["url"])
+
+                    image = MovilizationImages(
+                        movilization_id=movilization_id,
+                        image_path=result["url"],
+                        type="finales"
+                    )
+
+                    session.add(image)
+
+                session.commit()
+
+            except Exception as exception:
+                session.rollback()
+
+                #limpia archivos guardados si falla DB
+                for path in saved_files:
+                    full_path = os.path.join("/var/www", path.lstrip("/"))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+            finally:
+                session.close()
+
+
     def save_image(self, file):
         folder = "/var/www/uploads/technical"
         ALLOWED_EXTENSIONS = {"webp"}
