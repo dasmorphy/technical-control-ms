@@ -512,3 +512,162 @@ ALTER SEQUENCE technical.movilization_status_id_seq
 
 ALTER TABLE IF EXISTS technical.movilization_status
     ALTER COLUMN id_status SET DEFAULT nextval('technical.movilization_status_id_seq'::regclass);
+
+
+
+---------------------------------------------------------------------------------------------------------
+
+
+CREATE TABLE technical.clients
+(
+    id_client integer NOT NULL,
+    name text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    updated_by text,
+    CONSTRAINT client_pkey PRIMARY KEY (id_client)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.clients
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.clients_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.clients_id_seq
+    OWNED BY technical.clients.id_client;
+
+ALTER SEQUENCE technical.clients_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.clients
+    ALTER COLUMN id_client SET DEFAULT nextval('technical.clients_id_seq'::regclass);
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.clients_location
+(
+    id_location integer NOT NULL,
+    name text,
+    address text,
+    "long" text,
+    lat text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    updated_by text,
+    PRIMARY KEY (id_location)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.clients_location
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.clients_location_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.clients_location_id_seq
+    OWNED BY technical.clients_location.id_location;
+
+ALTER SEQUENCE technical.clients_location_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.clients_location
+    ALTER COLUMN id_location SET DEFAULT nextval('technical.clients_location_id_seq'::regclass);
+
+
+---------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.task_technical
+(
+    id_task integer NOT NULL,
+    name text,
+    description text,
+    code text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    updated_by text,
+    CONSTRAINT task_pkey PRIMARY KEY (id_task)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.task_technical
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.task_technical_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.task_technical_id_seq
+    OWNED BY technical.task_technical.id_task;
+
+ALTER SEQUENCE technical.task_technical_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.task_technical
+    ALTER COLUMN id_task SET DEFAULT nextval('technical.task_technical_id_seq'::regclass);
+
+
+----------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.task_location
+(
+    id_task_location integer NOT NULL,
+    location_id integer,
+    task_id integer,
+    created_by text,
+    updated_by text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    PRIMARY KEY (id_task_location)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.task_location
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.task_location_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.task_location_id_seq
+    OWNED BY technical.task_location.id_task_location;
+
+ALTER SEQUENCE technical.task_location_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.task_location
+    ALTER COLUMN id_task_location SET DEFAULT nextval('technical.task_location_id_seq'::regclass);
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
