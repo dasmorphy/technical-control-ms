@@ -554,24 +554,42 @@ ALTER TABLE IF EXISTS technical.clients
 
 -------------------------------------------------------------------------------------------------------------------
 
-CREATE TABLE technical.clients_location
+-- Table: technical.clients_location
+
+-- DROP TABLE IF EXISTS technical.clients_location;
+
+CREATE TABLE IF NOT EXISTS technical.clients_location
 (
-    id_location integer NOT NULL,
-    name text,
-    address text,
-    "long" text,
-    lat text,
+    id_location integer NOT NULL DEFAULT nextval('technical.clients_location_id_seq'::regclass),
+    name text COLLATE pg_catalog."default",
+    address text COLLATE pg_catalog."default",
+    "long" text COLLATE pg_catalog."default",
+    lat text COLLATE pg_catalog."default",
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
-    created_by text,
-    updated_by text,
-    PRIMARY KEY (id_location)
+    created_by text COLLATE pg_catalog."default",
+    updated_by text COLLATE pg_catalog."default",
+    client_id integer,
+    CONSTRAINT clients_location_pkey PRIMARY KEY (id_location),
+    CONSTRAINT client_id_fkey FOREIGN KEY (client_id)
+        REFERENCES technical.clients (id_client) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS technical.clients_location
     OWNER to nextgen;
+-- Index: fki_client_id_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_client_id_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_client_id_fkey
+    ON technical.clients_location USING btree
+    (client_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
 
 
 CREATE SEQUENCE technical.clients_location_id_seq
@@ -631,22 +649,52 @@ ALTER TABLE IF EXISTS technical.task_technical
 
 ----------------------------------------------------------------------------------------------------------------------------
 
-CREATE TABLE technical.task_location
+-- Table: technical.task_location
+
+-- DROP TABLE IF EXISTS technical.task_location;
+
+CREATE TABLE IF NOT EXISTS technical.task_location
 (
     id_task_location integer NOT NULL,
     location_id integer,
     task_id integer,
-    created_by text,
-    updated_by text,
+    created_by text COLLATE pg_catalog."default",
+    updated_by text COLLATE pg_catalog."default",
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
-    PRIMARY KEY (id_task_location)
+    CONSTRAINT task_location_pkey PRIMARY KEY (id_task_location),
+    CONSTRAINT location_id_fkey FOREIGN KEY (location_id)
+        REFERENCES technical.clients_location (id_location) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT task_id_fkey FOREIGN KEY (task_id)
+        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS technical.task_location
     OWNER to nextgen;
+-- Index: fki_location_id_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_location_id_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_location_id_fkey
+    ON technical.task_location USING btree
+    (location_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: fki_task_id_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_task_id_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_task_id_fkey
+    ON technical.task_location USING btree
+    (task_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
 
 
 CREATE SEQUENCE technical.task_location_id_seq
@@ -667,7 +715,213 @@ ALTER TABLE IF EXISTS technical.task_location
 
 -------------------------------------------------------------------------------------------------------------------------
 
+CREATE TABLE technical.auditing_sections
+(
+    id_section integer NOT NULL,
+    name text,
+	order_number integer,
+    created_at timestamp without time zone DEFAULT now(),
+	created_by text,
+    PRIMARY KEY (id_section)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing_sections
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.auditing_sections_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.auditing_sections_id_seq
+    OWNED BY technical.auditing_sections.id_section;
+
+ALTER SEQUENCE technical.auditing_sections_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing_sections
+    ALTER COLUMN id_section SET DEFAULT nextval('technical.auditing_sections_id_seq'::regclass);
+
+
+---------------------------------------------------------------------------------------------------------------
+
+
+CREATE TABLE technical.auditing_item
+(
+    id_item integer NOT NULL,
+    section_id integer,
+    name text,
+    order_number integer,
+    created_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by text,
+    CONSTRAINT auditing_item_pkey PRIMARY KEY (id_item),
+    CONSTRAINT section_id_fkey FOREIGN KEY (section_id)
+        REFERENCES technical.auditing_sections (id_section) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing_item
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.auditing_item_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.auditing_item_id_seq
+    OWNED BY technical.auditing_item.id_item;
+
+ALTER SEQUENCE technical.auditing_item_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing_item
+    ALTER COLUMN id_item SET DEFAULT nextval('technical.auditing_item_id_seq'::regclass);
+
+
+-------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.auditing
+(
+    id_auditing integer NOT NULL,
+    task_id integer,
+    location_id integer,
+    responsible text,
+    percentage_compliance text,
+    status text,
+    created_by text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by text,
+    CONSTRAINT auditing_pkey PRIMARY KEY (id_auditing),
+    CONSTRAINT auditing_location_fkey FOREIGN KEY (location_id)
+        REFERENCES technical.clients_location (id_location) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT auditing_task_id FOREIGN KEY (task_id)
+        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing
+    OWNER to nextgen;
 
 
 
+CREATE SEQUENCE technical.auditing_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
 
+ALTER SEQUENCE technical.auditing_id_seq
+    OWNED BY technical.auditing.id_auditing;
+
+ALTER SEQUENCE technical.auditing_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing
+    ALTER COLUMN id_auditing SET DEFAULT nextval('technical.auditing_id_seq'::regclass);
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.auditing_response
+(
+    id_response integer NOT NULL,
+    auditing_id integer,
+    item_id integer,
+    response text,
+    observation text,
+    created_by text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    updated_by text,
+    CONSTRAINT auditing_response_pkey PRIMARY KEY (id_response),
+    CONSTRAINT item_id_fkey FOREIGN KEY (item_id)
+        REFERENCES technical.auditing_item (id_item) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT auditing_id_fkey FOREIGN KEY (auditing_id)
+        REFERENCES technical.auditing (id_auditing) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing_response
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.auditing_response_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.auditing_response_id_seq
+    OWNED BY technical.auditing_response.id_response;
+
+ALTER SEQUENCE technical.auditing_response_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing_response
+    ALTER COLUMN id_response SET DEFAULT nextval('technical.auditing_response_id_seq'::regclass);
+
+
+----------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.auditing_signatures_img
+(
+    id_signature integer NOT NULL,
+    auditing_id integer,
+    auditor text,
+    responsible text,
+    client text,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT signature_pkey PRIMARY KEY (id_signature),
+    CONSTRAINT signature_auditing_fkey FOREIGN KEY (auditing_id)
+        REFERENCES technical.auditing (id_auditing) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing_signatures_img
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.auditing_signatures_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.auditing_signatures_id_seq
+    OWNED BY technical.auditing_signatures_img.id_signature;
+
+ALTER SEQUENCE technical.auditing_signatures_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing_signatures_img
+    ALTER COLUMN id_signature SET DEFAULT nextval('technical.auditing_signatures_id_seq'::regclass);

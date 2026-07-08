@@ -4,8 +4,10 @@ from loguru import logger
 from sqlalchemy.orm import aliased
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
+from swagger_server.models.db.client import Client
 from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.level_gasoline import LevelGasoline
+from swagger_server.models.db.location import ClientLocation
 from swagger_server.models.db.movilization_client import MovilizationClient
 from swagger_server.models.db.movilization_control import MovilizationControl
 from swagger_server.models.db.movilization_copilot import MovilizationCopilot
@@ -13,6 +15,8 @@ from swagger_server.models.db.movilization_images import MovilizationImages
 from swagger_server.models.db.movilization_reason import MovilizationReason
 from swagger_server.models.db.movilization_status import MovilizationStatus
 from swagger_server.models.db.reasons_movilization import ReasonsMovilization
+from swagger_server.models.db.task_location import TaskLocation
+from swagger_server.models.db.task_technical import TaskTechnical
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
@@ -550,3 +554,129 @@ class TechnicalRepository:
         return {
             "url": f"/uploads/technical/{filename}"
         }
+    
+    def get_clients(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(Client)
+                )
+                drivers = [
+                    {
+                        "id_client": c.id_client,
+                        "name": c.name,
+                        "created_by": c.created_by,
+                        "updated_by": c.updated_by,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in result.scalars().all()
+                ]
+                return drivers
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_location(self, filters, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = (
+                    select(ClientLocation)
+                )
+
+                if filters.get("clients"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.client_id.in_(filters["clients"])
+                    )
+
+                rows = session.execute(query_stmt).scalars().all()
+
+                data = [
+                    {
+                        "id_location": c.id_location,
+                        "client_id": c.client_id,
+                        "name": c.name,
+                        "address": c.address,
+                        "long": c.long,
+                        "lat": c.lat,
+                        "created_by": c.created_by,
+                        "updated_by": c.updated_by,
+                        "created_at": c.created_at,
+                        "updated_at": c.updated_at
+                    }
+                    for c in rows
+                ]
+                return data
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_task(self, filters, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = (
+                    select(
+                        TaskTechnical,
+                        ClientLocation,
+                        Client
+                    )
+                    .outerjoin(
+                        TaskLocation,
+                        TaskLocation.task_id == TaskTechnical.id_task
+                    )
+                    .outerjoin(
+                        ClientLocation,
+                        ClientLocation.id_location == TaskLocation.location_id
+                    )
+                    .outerjoin(
+                        Client,
+                        Client.id_client == ClientLocation.client_id
+                    )
+                    .order_by(TaskTechnical.created_at.desc())
+                )
+
+                if filters.get("locations"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.id_location.in_(filters["locations"])
+                    )
+
+                if filters.get("clients"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.client_id.in_(filters["clients"])
+                    )
+
+
+                rows = session.execute(query_stmt).all()
+
+                data = [
+                    {
+                        "id_task": task.id_task,
+                        "name": task.name,
+                        "client": client.name,
+                        "description": task.description,
+                        "location": location.name if location else None,
+                        "code": task.code,
+                        "created_by": task.created_by,
+                        "updated_by": task.updated_by,
+                        "created_at": task.created_at,
+                        "updated_at": task.updated_at
+                    }
+                    for task, location, client in rows
+                ]
+
+                return data
+            
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)

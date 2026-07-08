@@ -110,6 +110,223 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /clients:
+    get:
+      tags:
+      - Clients
+      summary: Obtiene todos los clientes
+      description: Devuelve todos los clientes de la base
+      operationId: get_clients
+      parameters:
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /location:
+    get:
+      tags:
+      - Location
+      summary: Obtiene todos las sucursales de los clientes
+      description: Devuelve todos las sucursales de la base
+      operationId: get_location
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "1, 2, 3"
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /task:
+    get:
+      tags:
+      - Task
+      summary: Obtiene todos las tareas / actividades de los tecnicos
+      description: Devuelve todos las tareas / actividades de la base
+      operationId: get_task
+      parameters:
+        - name: locations
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "1, 2, 3"
+        - name: clients
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "1, 2, 3"
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+    post:
+      tags:
+      - Task
+      summary: Guarda las tareas en la base de datos.
+      description: Guardado de tareas de tecnicos
+      operationId: post_task
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestPostTask"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
   /get/all-reasons:
     get:
       tags:
@@ -480,6 +697,16 @@ components:
         externalTransactionId:
           type: string
           example: fcea920f7412b5da7be0cf42b8c93759
+    RequestPostTask:
+      properties:
+        technical_data:
+          $ref: "#/components/schemas/TaskData"
+        channel:
+          type: string
+          example: Tech control
+        externalTransactionId:
+          type: string
+          example: fcea920f7412b5da7be0cf42b8c93759
     TechnicalData:
       type: object
       properties:
@@ -694,6 +921,21 @@ components:
       example:
         id_project: 1
         name: Trabajo programado
+    TaskData:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "TAREA INSTALACION"
+        description:
+          type: string
+          example: "N/A"
+        code:
+          type: string
+          example: "TASK-TEST-001"
+        user:
+          type: string
+          example: "dmales"
     ResponseError:
       type: object
       properties:

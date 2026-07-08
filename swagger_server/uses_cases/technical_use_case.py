@@ -68,4 +68,28 @@ class TechnicalUseCase:
         ]
         
         return results
+    
+    def get_clients(self, internal, external):
+        return self.technical_control_repository.get_clients(internal, external)
+    
+    def get_location(self, params, internal, external):
+        clients = params.get("client_id")
+
+        filters = {
+            "clients": [int(x) for x in clients.split(",")] if clients else [],
+        }
+
+        return self.technical_control_repository.get_location(filters, internal, external)
+
+    
+    def get_task(self, params, internal, external):
+        locations = params.get("locations")
+        clients = params.get("clients")
+
+        filters = {
+            "locations": [int(x) for x in locations.split(",")] if locations else [],
+            "clients": [int(x) for x in clients.split(",")] if clients else [],
+        }
+
+        return self.technical_control_repository.get_task(filters, internal, external)
 
