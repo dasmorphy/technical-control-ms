@@ -14,9 +14,11 @@ class TaskData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, name: str=None, description: str=None, code: str=None, user: str=None):  # noqa: E501
+    def __init__(self, location_id: int=None, name: str=None, description: str=None, code: str=None, user: str=None):  # noqa: E501
         """TaskData - a model defined in Swagger
 
+        :param location_id: The location_id of this TaskData.  # noqa: E501
+        :type location_id: int
         :param name: The name of this TaskData.  # noqa: E501
         :type name: str
         :param description: The description of this TaskData.  # noqa: E501
@@ -27,6 +29,7 @@ class TaskData(Model):
         :type user: str
         """
         self.swagger_types = {
+            'location_id': int,
             'name': str,
             'description': str,
             'code': str,
@@ -34,11 +37,13 @@ class TaskData(Model):
         }
 
         self.attribute_map = {
+            'location_id': 'location_id',
             'name': 'name',
             'description': 'description',
             'code': 'code',
             'user': 'user'
         }
+        self._location_id = location_id
         self._name = name
         self._description = description
         self._code = code
@@ -54,6 +59,27 @@ class TaskData(Model):
         :rtype: TaskData
         """
         return util.deserialize_model(dikt, cls)
+
+    @property
+    def location_id(self) -> int:
+        """Gets the location_id of this TaskData.
+
+
+        :return: The location_id of this TaskData.
+        :rtype: int
+        """
+        return self._location_id
+
+    @location_id.setter
+    def location_id(self, location_id: int):
+        """Sets the location_id of this TaskData.
+
+
+        :param location_id: The location_id of this TaskData.
+        :type location_id: int
+        """
+
+        self._location_id = location_id
 
     @property
     def name(self) -> str:

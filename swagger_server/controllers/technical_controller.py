@@ -4,6 +4,7 @@ import connexion
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.generic_response import GenericResponse  # noqa: E501
+from swagger_server.models.request_post_task import RequestPostTask
 from swagger_server.models.response_error import ResponseError  # noqa: E501
 from swagger_server import util
 from flask import jsonify, request, send_file
@@ -413,6 +414,35 @@ class TechnicalView(MethodView):
         response = {}
         status_code = 500
         try:
+            if connexion.request.is_json:
+                body = RequestPostTask.from_dict(connexion.request.get_json())  # noqa: E501
+                start_time = default_timer()
+                internal_transaction_id = str(generate_internal_transaction_id())
+                external_transaction_id = body.external_transaction_id
+                internal_process = (internal_transaction_id, external_transaction_id)
+                response["internal_transaction_id"] = internal_transaction_id
+                response["external_transaction_id"] = external_transaction_id
+                message = f"start request: {function_name}, channel: {body.channel}"
+                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+                self.technical_use_case.post_task(body.technical_data, internal_transaction_id, external_transaction_id)
+                response["error_code"] = 0
+                response["message"] = "Registro guardado correctamente"
+                end_time = default_timer()
+                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                            internal=internal_transaction_id, external=body.external_transaction_id)
+                status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            
+        return response, status_code
+    
+
+    def get_tech_record(self):
+        internal_process = (None, None)
+        function_name = "get_tech_record"
+        response = {}
+        status_code = 500
+        try:
             if connexion.request.headers:
                 start_time = default_timer()
                 internal_transaction_id = str(generate_internal_transaction_id())
@@ -422,7 +452,7 @@ class TechnicalView(MethodView):
                 response["external_transaction_id"] = external_transaction_id
                 message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
-                results = self.technical_use_case.get_task(request.args ,internal_transaction_id, external_transaction_id)
+                results = self.technical_use_case.get_tech_record(request.args ,internal_transaction_id, external_transaction_id)
                 response["error_code"] = 0
                 response["message"] = "Registros obtenidos correctamente"
                 response["data"] = results

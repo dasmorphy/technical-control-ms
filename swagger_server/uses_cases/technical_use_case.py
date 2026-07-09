@@ -1,4 +1,6 @@
 from swagger_server.models.db.movilization_control import MovilizationControl
+from swagger_server.models.db.task_technical import TaskTechnical
+from swagger_server.models.task_data import TaskData
 from swagger_server.repository.technical_repository import TechnicalRepository
 
 
@@ -92,4 +94,19 @@ class TechnicalUseCase:
         }
 
         return self.technical_control_repository.get_task(filters, internal, external)
+    
+    def post_task(self, data: TaskData, internal, external):
+        self.technical_control_repository.post_task(data, internal, external)
+
+    
+    def get_tech_record(self, params, internal, external):
+        locations = params.get("locations")
+        clients = params.get("clients")
+
+        filters = {
+            "locations": [int(x) for x in locations.split(",")] if locations else [],
+            "clients": [int(x) for x in clients.split(",")] if clients else [],
+        }
+
+        return self.technical_control_repository.get_tech_record(filters, internal, external)
 

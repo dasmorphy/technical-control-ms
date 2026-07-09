@@ -20,6 +20,7 @@ from swagger_server.models.db.task_technical import TaskTechnical
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
+from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
 from sqlalchemy import ARRAY, JSON, Text, cast, distinct, exists, func, select, text
 
@@ -620,6 +621,104 @@ class TechnicalRepository:
             
 
     def get_task(self, filters, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = (
+                    select(
+                        TaskTechnical,
+                        ClientLocation,
+                        Client
+                    )
+                    .outerjoin(
+                        TaskLocation,
+                        TaskLocation.task_id == TaskTechnical.id_task
+                    )
+                    .outerjoin(
+                        ClientLocation,
+                        ClientLocation.id_location == TaskLocation.location_id
+                    )
+                    .outerjoin(
+                        Client,
+                        Client.id_client == ClientLocation.client_id
+                    )
+                    .order_by(TaskTechnical.created_at.desc())
+                )
+
+                if filters.get("locations"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.id_location.in_(filters["locations"])
+                    )
+
+                if filters.get("clients"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.client_id.in_(filters["clients"])
+                    )
+
+
+                rows = session.execute(query_stmt).all()
+
+                data = [
+                    {
+                        "id_task": task.id_task,
+                        "name": task.name,
+                        "client": client.name,
+                        "description": task.description,
+                        "location": location.name if location else None,
+                        "code": task.code,
+                        "created_by": task.created_by,
+                        "updated_by": task.updated_by,
+                        "created_at": task.created_at,
+                        "updated_at": task.updated_at
+                    }
+                    for task, location, client in rows
+                ]
+
+                return data
+            
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def post_task(self, data: TaskData, internal, external) -> None:
+        with self.db.session_factory() as session:
+            try:
+                new_task = TaskTechnical(
+                    name=data.name,
+                    description=data.description,
+                    code=data.code,
+                    created_by=data.user,
+                    updated_by=data.user
+                )
+
+                session.add(new_task)
+                session.flush()
+
+                new_task_location= TaskLocation(
+                    location_id=data.location_id,
+                    task_id=new_task.id_task,
+                    created_by=data.user,
+                    updated_by=data.user
+                )
+
+                session.add(new_task_location)
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+            finally:
+                session.close()
+
+
+    def get_tech_record(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
                 query_stmt = (

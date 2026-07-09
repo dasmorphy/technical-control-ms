@@ -925,3 +925,81 @@ ALTER SEQUENCE technical.auditing_signatures_id_seq
 
 ALTER TABLE IF EXISTS technical.auditing_signatures_img
     ALTER COLUMN id_signature SET DEFAULT nextval('technical.auditing_signatures_id_seq'::regclass);
+
+
+-----------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.technical_record
+(
+    id_record integer NOT NULL,
+    task_id integer,
+    resume text,
+    created_by text,
+    updated_by text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    PRIMARY KEY (id_record)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.technical_record
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.technical_record_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.technical_record_id_seq
+    OWNED BY technical.technical_record.id_record;
+
+ALTER SEQUENCE technical.technical_record_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.technical_record
+    ALTER COLUMN id_record SET DEFAULT nextval('technical.technical_record_id_seq'::regclass);
+
+-----------------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.material_technical_record
+(
+    id_material_record integer NOT NULL,
+    task_id integer,
+    material text,
+    quantity integer,
+    created_by text,
+    updated_by text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT material_record_pkey PRIMARY KEY (id_material_record),
+    CONSTRAINT task_record_fkey FOREIGN KEY (task_id)
+        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.material_technical_record
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.material_technical_record_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.material_technical_record_id_seq
+    OWNED BY technical.material_technical_record.id_material_record;
+
+ALTER SEQUENCE technical.material_technical_record_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.material_technical_record
+    ALTER COLUMN id_material_record SET DEFAULT nextval('technical.material_technical_record_id_seq'::regclass);
