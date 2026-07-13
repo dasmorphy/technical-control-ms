@@ -97,6 +97,10 @@ class TechnicalUseCase:
         self.technical_control_repository.post_task(data, internal, external)
 
     
+    def post_auditing(self, data: TaskData, images, internal, external):
+        self.technical_control_repository.post_auditing(data, images, internal, external)
+
+    
     def get_tech_record(self, params, internal, external):
         locations = params.get("locations")
         clients = params.get("clients")

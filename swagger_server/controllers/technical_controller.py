@@ -4,6 +4,7 @@ import connexion
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.generic_response import GenericResponse  # noqa: E501
+from swagger_server.models.request_post_auditing import RequestPostAuditing
 from swagger_server.models.request_post_task import RequestPostTask
 from swagger_server.models.response_error import ResponseError  # noqa: E501
 from swagger_server import util
@@ -486,22 +487,41 @@ class TechnicalView(MethodView):
         response = {}
         status_code = 500
         try:
-            if connexion.request.headers:
+            if request.content_type.startswith("multipart/form-data"):
                 start_time = default_timer()
                 internal_transaction_id = str(generate_internal_transaction_id())
-                external_transaction_id = request.headers.get('externalTransactionId')
+                auditing_data = request.files.get("data")
+
+                if not auditing_data:
+                    raise CustomAPIException("Campo data no enviado", 400)
+
+                auditing_raw = auditing_data.read().decode("utf-8")
+                auditing_dict = json.loads(auditing_raw)
+
+                external_transaction_id = auditing_dict['external_transaction_id']
                 internal_process = (internal_transaction_id, external_transaction_id)
                 response["internal_transaction_id"] = internal_transaction_id
                 response["external_transaction_id"] = external_transaction_id
-                message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
+                message = f"start request: {function_name}, channel: {auditing_dict['channel']}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
-                results = self.technical_use_case.get_auditing(request.args ,internal_transaction_id, external_transaction_id)
+                auditor_img = request.files.get("auditor_img")
+                responsible_img = request.files.get("responsible_img")
+                client_img = request.files.get("client_img")
+                self.technical_use_case.post_auditing(
+                    auditing_dict,
+                    {
+                        "auditor_img": auditor_img,
+                        "responsible_img": responsible_img,
+                        "client_img": client_img,
+                    },
+                    internal_transaction_id,
+                    external_transaction_id
+                )
                 response["error_code"] = 0
-                response["message"] = "Registros obtenidos correctamente"
-                response["data"] = results
+                response["message"] = "Control técnico actualizado correctamente"
                 end_time = default_timer()
                 logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
-                            internal=internal_transaction_id, external=external_transaction_id)
+                            internal=internal_transaction_id, external=auditing_dict['external_transaction_id'])
                 status_code = 200
         except Exception as ex:
             response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)

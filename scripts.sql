@@ -894,9 +894,9 @@ CREATE TABLE technical.auditing_signatures_img
 (
     id_signature integer NOT NULL,
     auditing_id integer,
-    auditor text,
-    responsible text,
-    client text,
+    auditor_path text,
+    responsible_path text,
+    client_path text,
     created_at timestamp without time zone DEFAULT now(),
     CONSTRAINT signature_pkey PRIMARY KEY (id_signature),
     CONSTRAINT signature_auditing_fkey FOREIGN KEY (auditing_id)

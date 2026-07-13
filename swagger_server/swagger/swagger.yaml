@@ -796,7 +796,7 @@ paths:
         content:
           multipart/form-data:
             schema:
-              $ref: "#/components/schemas/RequestPostTechnicalControl"
+              $ref: "#/components/schemas/RequestPostAuditing"
       responses:
         "200":
           description: OK
@@ -861,6 +861,44 @@ components:
         externalTransactionId:
           type: string
           example: fcea920f7412b5da7be0cf42b8c93759
+    RequestPostAuditing:
+      properties:
+        data:
+          $ref: "#/components/schemas/AuditingData"
+        auditor_img:
+          type: string
+          format: binary
+        responsible_img:
+          type: string
+          format: binary
+        client_img:
+          type: string
+          format: binary
+        channel:
+          type: string
+          example: Tech control
+        externalTransactionId:
+          type: string
+          example: fcea920f7412b5da7be0cf42b8c93759
+    AuditingData:
+      type: object
+      properties:
+        responses:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResponseAuditingData"
+        task_id:
+          type: integer
+          example: 1
+        location_id:
+          type: integer
+          example: 1
+        responsible:
+          type: string
+          example: "Daniel Males"
+        user:
+          type: string
+          example: "dmales"
     TechnicalData:
       type: object
       properties:
@@ -898,6 +936,20 @@ components:
         material:
           type: string
           example: "1"
+    ResponseAuditingData:
+      type: object
+      properties:
+        item_id:
+          type: integer
+          example: 1
+        response:
+          nullable: true
+          type: string
+          example: "SI"
+        observation:
+          nullable: true
+          type: string
+          example: "N/A"
     TechnicalPutData:
       type: object
       properties:

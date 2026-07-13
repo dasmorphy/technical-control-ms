@@ -8,6 +8,7 @@ from swagger_server.models.db.auditing import Auditing
 from swagger_server.models.db.auditing_item import AuditingItem
 from swagger_server.models.db.auditing_response import AuditingResponse
 from swagger_server.models.db.auditing_sections import AuditingSections
+from swagger_server.models.db.auditing_signatures_img import AuditingSignaturesImg
 from swagger_server.models.db.client import Client
 from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.level_gasoline import LevelGasoline
@@ -576,6 +577,7 @@ class TechnicalRepository:
                         "description": task.description,
                         "location": location.name if location else None,
                         "code": task.code,
+                        "status": task.status,
                         "created_by": task.created_by,
                         "updated_by": task.updated_by,
                         "created_at": task.created_at,
@@ -794,3 +796,64 @@ class TechnicalRepository:
                     raise exception
 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def post_auditing(self, data: TaskData, images, internal, external) -> None:
+        saved_files = []
+
+        with self.db.session_factory() as session:
+            try:
+                new_auditing = Auditing(
+                    task_id=data.task_id,
+                    location_id=data.location_id,
+                    responsible=data.responsible,
+                    percentage_compliance=data.percentage_compliance,
+                    status=data.status,
+                    created_by=data.user,
+                    updated_by=data.user
+                )
+
+                session.add(new_auditing)
+                session.flush()
+                
+                for response in data.responses:
+                    new_response= AuditingResponse(
+                        auditing_id=new_auditing.id_auditing,
+                        item_id=response.item_id,
+                        response=response.response,
+                        observation=data.observation,
+                        created_by=data.user,
+                        updated_by=data.user
+                    )
+                    session.add(new_response)
+
+                signature = AuditingSignaturesImg(
+                    auditing_id=new_auditing.id_auditing
+                )
+
+                fields = {
+                    "auditor_img": "auditor_path",
+                    "responsible_img": "responsible_path",
+                    "client_img": "client_path",
+                }
+
+                for image_key, model_attr in fields.items():
+                    image = images.get(image_key)
+                    if image:
+                        result = self.save_image(image)
+                        saved_files.append(result["url"])
+                        setattr(signature, model_attr, result["url"])
+
+                session.add(signature)
+
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+            finally:
+                session.close()
