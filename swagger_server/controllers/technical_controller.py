@@ -23,56 +23,6 @@ class TechnicalView(MethodView):
         technical_control_repository = TechnicalRepository()
         self.technical_use_case = TechnicalUseCase(technical_control_repository)
 
-    def post_technical(self, technical_data=None, channel=None, external_transaction_id=None):  # noqa: E501
-        """Guarda el control tecnico en la base de datos.
-
-        Guardado de control tecnico de ingreso # noqa: E501
-
-        :param technical_data: 
-        :type technical_data: dict | bytes
-        :param channel: 
-        :type channel: str
-        :param external_transaction_id: 
-        :type external_transaction_id: str
-
-        :rtype: GenericResponse
-        """
-        internal_process = (None, None)
-        function_name = "post_technical"
-        response = {}
-        status_code = 500
-        try:
-            if request.content_type.startswith("multipart/form-data"):
-                start_time = default_timer()
-                internal_transaction_id = str(generate_internal_transaction_id())
-                technical_data = request.files.get("technical_data")
-
-                if not technical_data:
-                    raise CustomAPIException("Campo technical_data no enviado", 400)
-
-                technical_raw = technical_data.read().decode("utf-8")
-                technical_dict = json.loads(technical_raw)
-
-                external_transaction_id = technical_dict['external_transaction_id']
-                internal_process = (internal_transaction_id, external_transaction_id)
-                response["internal_transaction_id"] = internal_transaction_id
-                response["external_transaction_id"] = external_transaction_id
-                message = f"start request: {function_name}, channel: {technical_dict['channel']}"
-                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
-                files = request.files.getlist("initial_images")
-                self.technical_use_case.post_technical_control(technical_dict, files, internal_transaction_id, external_transaction_id)
-                response["error_code"] = 0
-                response["message"] = "Control técnico creado correctamente"
-                end_time = default_timer()
-                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
-                            internal=internal_transaction_id, external=technical_dict['external_transaction_id'])
-                status_code = 200
-        except Exception as ex:
-            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
-            
-        return response, status_code
-    
-
     def put_technical(self, technical_data=None, channel=None, external_transaction_id=None):  # noqa: E501
         """Guarda el control tecnico en la base de datos.
 
@@ -453,6 +403,99 @@ class TechnicalView(MethodView):
                 message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
                 results = self.technical_use_case.get_tech_record(request.args ,internal_transaction_id, external_transaction_id)
+                response["error_code"] = 0
+                response["message"] = "Registros obtenidos correctamente"
+                response["data"] = results
+                end_time = default_timer()
+                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                            internal=internal_transaction_id, external=external_transaction_id)
+                status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            
+        return response, status_code
+    
+    def post_tech_record(self):
+        internal_process = (None, None)
+        function_name = "post_tech_record"
+        response = {}
+        status_code = 500
+        try:
+            if request.content_type.startswith("multipart/form-data"):
+                start_time = default_timer()
+                internal_transaction_id = str(generate_internal_transaction_id())
+                technical_data = request.files.get("technical_data")
+
+                if not technical_data:
+                    raise CustomAPIException("Campo technical_data no enviado", 400)
+
+                technical_raw = technical_data.read().decode("utf-8")
+                technical_dict = json.loads(technical_raw)
+
+                external_transaction_id = technical_dict['external_transaction_id']
+                internal_process = (internal_transaction_id, external_transaction_id)
+                response["internal_transaction_id"] = internal_transaction_id
+                response["external_transaction_id"] = external_transaction_id
+                message = f"start request: {function_name}, channel: {technical_dict['channel']}"
+                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+                files = request.files.getlist("images")
+                self.technical_use_case.post_technical_control(technical_dict, files, internal_transaction_id, external_transaction_id)
+                response["error_code"] = 0
+                response["message"] = "Registro guardado correctamente"
+                end_time = default_timer()
+                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                            internal=internal_transaction_id, external=technical_dict['external_transaction_id'])
+                status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            
+        return response, status_code
+    
+
+    def get_auditing(self):
+        internal_process = (None, None)
+        function_name = "get_auditing"
+        response = {}
+        status_code = 500
+        try:
+            if connexion.request.headers:
+                start_time = default_timer()
+                internal_transaction_id = str(generate_internal_transaction_id())
+                external_transaction_id = request.headers.get('externalTransactionId')
+                internal_process = (internal_transaction_id, external_transaction_id)
+                response["internal_transaction_id"] = internal_transaction_id
+                response["external_transaction_id"] = external_transaction_id
+                message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
+                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+                results = self.technical_use_case.get_auditing(request.args ,internal_transaction_id, external_transaction_id)
+                response["error_code"] = 0
+                response["message"] = "Registros obtenidos correctamente"
+                response["data"] = results
+                end_time = default_timer()
+                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                            internal=internal_transaction_id, external=external_transaction_id)
+                status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            
+        return response, status_code
+    
+    def post_auditing(self):
+        internal_process = (None, None)
+        function_name = "post_auditing"
+        response = {}
+        status_code = 500
+        try:
+            if connexion.request.headers:
+                start_time = default_timer()
+                internal_transaction_id = str(generate_internal_transaction_id())
+                external_transaction_id = request.headers.get('externalTransactionId')
+                internal_process = (internal_transaction_id, external_transaction_id)
+                response["internal_transaction_id"] = internal_transaction_id
+                response["external_transaction_id"] = external_transaction_id
+                message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
+                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+                results = self.technical_use_case.get_auditing(request.args ,internal_transaction_id, external_transaction_id)
                 response["error_code"] = 0
                 response["message"] = "Registros obtenidos correctamente"
                 response["data"] = results

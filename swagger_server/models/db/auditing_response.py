@@ -11,22 +11,29 @@ from sqlalchemy import (
 from swagger_server.models.db import Base
 
 
-class TaskTechnical(Base):
-    __tablename__ = "task_technical"
+class AuditingResponse(Base):
+    __tablename__ = "auditing_response"
     __table_args__ = {"schema": "technical"}
 
-    id_task = Column(
+    id_response = Column(
         Integer,
-        Sequence("task_technical_id_seq", schema="technical"),
+        Sequence("auditing_item_id_seq", schema="technical"),
         primary_key=True,
         nullable=False
     )
 
-    name = Column(Text)
-    description = Column(Text)
-    code = Column(Text)
-    status = Column(Text)
-    
+    auditing_id = Column(
+        Integer,
+        ForeignKey("technical.auditing.id_auditing")
+    )
+
+    item_id = Column(
+        Integer,
+        ForeignKey("technical.auditing_item.id_item")
+    )
+
+    response = Column(Text)
+    observation = Column(Text)
 
     created_by = Column(Text)
     updated_by = Column(Text)

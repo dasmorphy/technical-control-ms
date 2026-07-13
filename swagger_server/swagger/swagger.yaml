@@ -535,58 +535,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
-  /get/all-technical-control:
-    get:
-      tags:
-      - Technical
-      summary: Obtiene todos los controles tecnicos
-      description: Devuelve todos los cotroles tecnicos de la base
-      operationId: get_all_tech_control
-      parameters:
-        - name: externalTransactionId
-          in: header
-          required: true
-          schema:
-            type: string
-            example: "fcea920f7412b5da7be0cf42b8c93759"
-        - name: channel
-          in: header
-          required: true
-          schema:
-            type: string
-            example: "TECHNICAL_MOVIL"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GenericResponse"
-        "400":
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-        "404":
-          description: Not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-        "500":
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-        "503":
-          description: Service unavailable
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseError"
-      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
   /update/technical-control:
     put:
       tags:
@@ -631,13 +579,94 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
-  /post/technical-control:
+  /technical_record:
+    get:
+      tags:
+      - Technical
+      summary: Obtiene todos los registros tecnicos
+      description: Devuelve todos los registros tecnicos de la base
+      operationId: get_tech_record
+      parameters:
+        - name: locations
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1,2,3]
+        - name: clients
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1,2,3]
+        - name: tasks
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1,2,3]
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
     post:
       tags:
       - Technical
       summary: Guarda el control tecnico en la base de datos.
       description: Guardado de control tecnico de ingreso
-      operationId: post_technical
+      operationId: post_tech_record
       requestBody:
         content:
           multipart/form-data:
@@ -675,14 +704,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
-  /technical_record:
+  /auditing:
     get:
       tags:
-      - Technical
-      summary: Obtiene todos los registros tecnicos
-      description: Devuelve todos los registros tecnicos de la base
-      operationId: get_tech_record
+      - Auditing
+      summary: Obtiene todos los registros de fiscalizacion
+      description: Devuelve todos los registros de fiscalizacion de la base
+      operationId: get_auditing
       parameters:
+        - name: locations
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1,2,3]
+        - name: clients
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1,2,3]
+        - name: tasks
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+          example: [1,2,3]
         - name: externalTransactionId
           in: header
           required: true
@@ -695,6 +754,49 @@ paths:
           schema:
             type: string
             example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "503":
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+    post:
+      tags:
+      - Auditing
+      summary: Guarda la fiscalizacion en la base de datos.
+      description: Guardado de fiscalizacion
+      operationId: post_auditing
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/RequestPostTechnicalControl"
       responses:
         "200":
           description: OK
@@ -762,82 +864,40 @@ components:
     TechnicalData:
       type: object
       properties:
-        created_at:
-          type: string
-          example: 2022-02-03 13:58:00
-        reasons:
+        materials:
           type: array
           items:
-            type: integer
-          example: [1,2,3]
-        project:
-          type: array
-          items:
-            type: integer
-          example: [1,2,3]
-        id_truck_license:
+            $ref: "#/components/schemas/MaterialsData"
+        task_id:
           type: integer
           example: 1
-        id_driver:
+        client_id:
           type: integer
           example: 1
-        initial_gasoline_id:
+        location_id:
           type: integer
           example: 1
-        final_gasoline_id:
-          type: integer
-          example: 2
-          nullable: true
-        initial_km:
+        resume:
           type: string
           example: "1"
-        final_km:
-          type: string
-          example: "1"
-        driver_companion:
-          type: array
-          items:
-            type: integer
-          example: [1,2,3]
-        destiny:
-          type: string
-        exit_point:
-          type: string
-          example: "Telearseg"
-        observations:
-          type: string
-          nullable: true
-        created_by:
+        user:
           type: string
           example: "dmales"
-        initial_images:
+        images:
           maxItems: 10
           type: array
           items:
             type: string
             format: binary
-        final_images:
-          maxItems: 10
-          type: array
-          items:
-            type: string
-            format: binary
-      example:
-        created_at: 2022-02-03 13:58:00
-        initial_gasoline_id: 4
-        final_gasoline_id: 4
-        reasons: [1,2,3]
-        project: [1,2,3]
-        id_truck_license: 1
-        initial_km: "15555"
-        final_km: "155"
-        driver_companion: [1,2,3]
-        exit_point: Telearseg
-        destiny: Expalsa
-        observations: Sin observacion
-        initial_images: []
-        final_images: []
-        created_by: dmales
+    MaterialsData:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          example: 1
+        material:
+          type: string
+          example: "1"
     TechnicalPutData:
       type: object
       properties:

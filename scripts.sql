@@ -617,6 +617,7 @@ CREATE TABLE technical.task_technical
     name text,
     description text,
     code text,
+    status text;
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     created_by text,
@@ -929,22 +930,67 @@ ALTER TABLE IF EXISTS technical.auditing_signatures_img
 
 -----------------------------------------------------------------------------------------------------------------
 
-CREATE TABLE technical.technical_record
+-- Table: technical.technical_record
+
+-- DROP TABLE IF EXISTS technical.technical_record;
+
+CREATE TABLE IF NOT EXISTS technical.technical_record
 (
-    id_record integer NOT NULL,
+    id_record integer NOT NULL DEFAULT nextval('technical.technical_record_id_seq'::regclass),
     task_id integer,
-    resume text,
-    created_by text,
-    updated_by text,
+    resume text COLLATE pg_catalog."default",
+    created_by text COLLATE pg_catalog."default",
+    updated_by text COLLATE pg_catalog."default",
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
-    PRIMARY KEY (id_record)
+    client_id integer,
+    location_id integer,
+    CONSTRAINT technical_record_pkey PRIMARY KEY (id_record),
+    CONSTRAINT technical_client_fkey FOREIGN KEY (client_id)
+        REFERENCES technical.clients (id_client) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT technical_location_fkey FOREIGN KEY (location_id)
+        REFERENCES technical.clients_location (id_location) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT technical_task_fkey FOREIGN KEY (task_id)
+        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
 )
 
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS technical.technical_record
     OWNER to nextgen;
+-- Index: fki_technical_client_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_technical_client_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_technical_client_fkey
+    ON technical.technical_record USING btree
+    (client_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: fki_technical_location_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_technical_location_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_technical_location_fkey
+    ON technical.technical_record USING btree
+    (location_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
+-- Index: fki_technical_task_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_technical_task_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_technical_task_fkey
+    ON technical.technical_record USING btree
+    (task_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
 
 
 CREATE SEQUENCE technical.technical_record_id_seq
@@ -965,19 +1011,21 @@ ALTER TABLE IF EXISTS technical.technical_record
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
-CREATE TABLE technical.material_technical_record
+-- Table: technical.material_technical_record
+
+-- DROP TABLE IF EXISTS technical.material_technical_record;
+
+CREATE TABLE IF NOT EXISTS technical.material_technical_record
 (
-    id_material_record integer NOT NULL,
-    task_id integer,
-    material text,
+    id_material_record integer NOT NULL DEFAULT nextval('technical.material_technical_record_id_seq'::regclass),
+    record_id integer,
+    material text COLLATE pg_catalog."default",
     quantity integer,
-    created_by text,
-    updated_by text,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     CONSTRAINT material_record_pkey PRIMARY KEY (id_material_record),
-    CONSTRAINT task_record_fkey FOREIGN KEY (task_id)
-        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+    CONSTRAINT material_record_fkey FOREIGN KEY (record_id)
+        REFERENCES technical.technical_record (id_record) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE NO ACTION
 )
@@ -986,6 +1034,15 @@ TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS technical.material_technical_record
     OWNER to nextgen;
+-- Index: fki_material_record_fkey
+
+-- DROP INDEX IF EXISTS technical.fki_material_record_fkey;
+
+CREATE INDEX IF NOT EXISTS fki_material_record_fkey
+    ON technical.material_technical_record USING btree
+    (record_id ASC NULLS LAST)
+    WITH (fillfactor=100, deduplicate_items=True)
+    TABLESPACE pg_default;
 
 
 CREATE SEQUENCE technical.material_technical_record_id_seq
@@ -1003,3 +1060,41 @@ ALTER SEQUENCE technical.material_technical_record_id_seq
 
 ALTER TABLE IF EXISTS technical.material_technical_record
     ALTER COLUMN id_material_record SET DEFAULT nextval('technical.material_technical_record_id_seq'::regclass);
+
+
+
+--------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.tech_record_image
+(
+    id_image integer NOT NULL,
+    record_id integer,
+    image_path text,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT record_image_pkey PRIMARY KEY (id_image),
+    CONSTRAINT image_record_id_fkey FOREIGN KEY (record_id)
+        REFERENCES technical.technical_record (id_record) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.tech_record_image
+    OWNER to nextgen;
+
+CREATE SEQUENCE technical.tech_record_image_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.tech_record_image_id_seq
+    OWNED BY technical.tech_record_image.id_image;
+
+ALTER SEQUENCE technical.tech_record_image_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.tech_record_image
+    ALTER COLUMN id_image SET DEFAULT nextval('technical.tech_record_image_id_seq'::regclass);

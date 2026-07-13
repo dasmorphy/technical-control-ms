@@ -4,10 +4,15 @@ from loguru import logger
 from sqlalchemy.orm import aliased
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
+from swagger_server.models.db.auditing import Auditing
+from swagger_server.models.db.auditing_item import AuditingItem
+from swagger_server.models.db.auditing_response import AuditingResponse
+from swagger_server.models.db.auditing_sections import AuditingSections
 from swagger_server.models.db.client import Client
 from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.level_gasoline import LevelGasoline
 from swagger_server.models.db.location import ClientLocation
+from swagger_server.models.db.material_technical_record import MaterialTechnicalRecord
 from swagger_server.models.db.movilization_client import MovilizationClient
 from swagger_server.models.db.movilization_control import MovilizationControl
 from swagger_server.models.db.movilization_copilot import MovilizationCopilot
@@ -17,6 +22,8 @@ from swagger_server.models.db.movilization_status import MovilizationStatus
 from swagger_server.models.db.reasons_movilization import ReasonsMovilization
 from swagger_server.models.db.task_location import TaskLocation
 from swagger_server.models.db.task_technical import TaskTechnical
+from swagger_server.models.db.tech_record_image import TechRecordImage
+from swagger_server.models.db.technical_record import TechnicalRecord
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
@@ -303,136 +310,40 @@ class TechnicalRepository:
         with self.db.session_factory() as session:
             try:
 
-                movilization = MovilizationControl(
-                    driver_id=data.get('id_driver'),
-                    destiny=data.get('destiny'),
-                    initial_km=data.get('initial_km'),
-                    exit_point=data.get('route_point'),
-                    observations=data.get('observations'),
-                    license_id=data.get('id_truck_license'),
-                    initial_gasoline_id=data.get('initial_gasoline_id'),
-                    status=1
+                technical_record = TechnicalRecord(
+                    task_id=data.get('task_id'),
+                    client_id=data.get('client_id'),
+                    location_id=data.get('location_id'),
+                    resume=data.get('resume'),
+                    created_by=data.get('user'),
                 )
 
-                session.add(movilization)
+                session.add(technical_record)
                 session.flush()
 
-                movilization_id = movilization.id_movilization
+                record_technical_id = technical_record.id_record
 
-                for id_project in data.get('project'):
-                    client = MovilizationClient(
-                        movilization_id=movilization_id,
-                        client_project_id=id_project
+                for material in data.get('materials'):
+                    material_tech = MaterialTechnicalRecord(
+                        record_id=record_technical_id,
+                        quantity=material.get('quantity'),
+                        material=material.get('material')
                     )
-                    session.add(client)
-
-                for id_reason in data.get('reasons'):
-                    reason = MovilizationReason(
-                        movilization_id=movilization_id,
-                        reason_id=id_reason
-                    )
-                    session.add(reason)
-                
-                for id_copilot in data.get('driver_companion'):
-                    copilot = MovilizationCopilot(
-                        movilization_id=movilization_id,
-                        copilot_id=id_copilot
-                    )
-                    session.add(copilot)
+                    session.add(material_tech)
 
                 #Guardar imágenes (máx 10)
                 for file in images[:10]:
                     result = self.save_image(file)
                     saved_files.append(result["url"])
 
-                    image = MovilizationImages(
-                        movilization_id=movilization_id,
+                    image = TechRecordImage(
+                        record_id=record_technical_id,
                         image_path=result["url"],
-                        type="iniciales"
                     )
 
                     session.add(image)
 
                 session.commit()
-                # category_exists = session.execute(
-                #     select(
-                #         exists().where(
-                #             Category.id_category == logbook_entry_body.category_id
-                #         )
-                #     )
-                # ).scalar()
-
-                # unity_weight_exists = session.execute(
-                #     select(
-                #         exists().where(
-                #             UnityWeight.id_unity == logbook_entry_body.unity_id
-                #         )
-                #     )
-                # ).scalar()
-
-                # group_business_exists = session.execute(
-                #     select(GroupBusiness).where(
-                #         GroupBusiness.id_group_business == logbook_entry_body.group_business_id
-                #     )
-                # ).scalar_one_or_none()
-
-                # category = session.execute(
-                #     select(Category).where(
-                #         Category.id_category == logbook_entry_body.category_id
-                #     )
-                # ).scalar_one_or_none()
-
-                # if not category_exists:
-                #     raise CustomAPIException(
-                #         message="No existe la categoría",
-                #         status_code=404
-                #     )
-                
-                # if not unity_weight_exists:
-                #     raise CustomAPIException(
-                #         message="No existe la unidad de peso",
-                #         status_code=404
-                #     )
-                
-                # if not group_business_exists:
-                #     raise CustomAPIException(
-                #         message="No existe el grupo de negocio",
-                #         status_code=404
-                #     )
-                
-                # session.add(logbook_entry_body)
-                # session.flush()
-                
-                # logbook_entry_id = logbook_entry_body.id_logbook_entry
-
-                # #Guardar imágenes (máx 10)
-                # for file in images[:10]:
-                #     if logbook_entry_body.shipping_guide == 'test daniel':
-                #         result = self.save_image(file)
-                #     else:
-                #         result = self.save_image_as_webp(file)
-                #     saved_files.append(result["url"])
-
-                #     image = LogbookImages(
-                #         logbook_id_entry=logbook_entry_id,
-                #         image_path=result["url"]
-                #     )
-
-                #     session.add(image)
-
-                # session.commit()
-
-                # logbook_entry_dict = logbook_entry_body.to_dict()
-                # logbook_entry_dict["name_category"] = category.name_category
-                # logbook_entry_dict["group_name"] = group_business_exists.name
-
-                # self.redis_client.client.publish(
-                #     "logbook_channel",
-                #     json.dumps({
-                #         "type": "logbook_saved",
-                #         "logbook": logbook_entry_dict
-                #     })
-                # )
 
             except Exception as exception:
                 session.rollback()
@@ -690,6 +601,7 @@ class TechnicalRepository:
                     name=data.name,
                     description=data.description,
                     code=data.code,
+                    status="Aprobado",
                     created_by=data.user,
                     updated_by=data.user
                 )
@@ -723,23 +635,24 @@ class TechnicalRepository:
             try:
                 query_stmt = (
                     select(
+                        TechnicalRecord,
                         TaskTechnical,
-                        ClientLocation,
-                        Client
+                        Client,
+                        ClientLocation
                     )
                     .outerjoin(
-                        TaskLocation,
-                        TaskLocation.task_id == TaskTechnical.id_task
+                        TaskTechnical,
+                        TaskTechnical.id_task == TechnicalRecord.task_id
                     )
                     .outerjoin(
                         ClientLocation,
-                        ClientLocation.id_location == TaskLocation.location_id
+                        ClientLocation.id_location == TechnicalRecord.location_id
                     )
                     .outerjoin(
                         Client,
-                        Client.id_client == ClientLocation.client_id
+                        Client.id_client == TechnicalRecord.client_id
                     )
-                    .order_by(TaskTechnical.created_at.desc())
+                    .order_by(TechnicalRecord.created_at.desc())
                 )
 
                 if filters.get("locations"):
@@ -752,23 +665,26 @@ class TechnicalRepository:
                         ClientLocation.client_id.in_(filters["clients"])
                     )
 
+                if filters.get("tasks"):
+                    query_stmt = query_stmt.where(
+                        TaskTechnical.id_task.in_(filters["tasks"])
+                    )
 
                 rows = session.execute(query_stmt).all()
 
                 data = [
                     {
-                        "id_task": task.id_task,
-                        "name": task.name,
-                        "client": client.name,
-                        "description": task.description,
-                        "location": location.name if location else None,
-                        "code": task.code,
-                        "created_by": task.created_by,
-                        "updated_by": task.updated_by,
-                        "created_at": task.created_at,
-                        "updated_at": task.updated_at
+                        "id_record": record.id_record,
+                        "resume": record.resume,
+                        "client_name": client.name,
+                        "location_name": location.name if location else None,
+                        "task_code": task.code if task else None,
+                        "created_by": record.created_by,
+                        "updated_by": record.updated_by,
+                        "created_at": record.created_at,
+                        "updated_at": record.updated_at
                     }
-                    for task, location, client in rows
+                    for record, task, client, location in rows
                 ]
 
                 return data
@@ -778,4 +694,103 @@ class TechnicalRepository:
                 if isinstance(exception, CustomAPIException):
                     raise exception
                 
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_auditing(self, filters, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = (
+                    select(
+                        Auditing,
+                        AuditingResponse,
+                        AuditingItem,
+                        AuditingSections,
+                        ClientLocation,
+                        Client,
+                    )
+                    .outerjoin(
+                        AuditingResponse,
+                        AuditingResponse.auditing_id == Auditing.id_auditing
+                    )
+                    .outerjoin(
+                        AuditingItem,
+                        AuditingItem.id_item == AuditingResponse.item_id
+                    )
+                    .outerjoin(
+                        AuditingSections,
+                        AuditingSections.id_section == AuditingItem.section_id
+                    )
+                    .outerjoin(
+                        ClientLocation,
+                        ClientLocation.id_location == Auditing.location_id
+                    )
+                    .outerjoin(
+                        Client,
+                        Client.id_client == ClientLocation.client_id
+                    )
+                    .order_by(Auditing.created_at.desc())
+                )
+
+                if filters.get("locations"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.id_location.in_(filters["locations"])
+                    )
+
+                if filters.get("clients"):
+                    query_stmt = query_stmt.where(
+                        ClientLocation.client_id.in_(filters["clients"])
+                    )
+
+                if filters.get("tasks"):
+                    query_stmt = query_stmt.where(
+                        Auditing.task_id.in_(filters["tasks"])
+                    )
+
+                rows = session.execute(query_stmt).all()
+
+                auditing_map = {}
+
+                for auditing, response, item, section, client_location, client in rows:
+                    if auditing.id_auditing not in auditing_map:
+                        auditing_map[auditing.id_auditing] = {
+                            "id_auditing": auditing.id_auditing,
+                            "task_id": auditing.task_id,
+                            "location_id": auditing.location_id,
+                            "responsible": auditing.responsible,
+                            "percentage_compliance": auditing.percentage_compliance,
+                            "status": auditing.status,
+                            "created_by": auditing.created_by,
+                            "updated_by": auditing.updated_by,
+                            "created_at": auditing.created_at,
+                            "updated_at": auditing.updated_at,
+                            "client_name": client.name,
+                            "location_name": client_location.name,
+                            "responses": [],
+                        }
+
+                    if response is not None:
+                        auditing_map[auditing.id_auditing]["responses"].append({
+                            "id_response": response.id_response,
+                            "response": response.response,
+                            "observation": response.observation,
+                            "item": {
+                                "id_item": item.id_item,
+                                "name": item.name,
+                                "order_number": item.order_number,
+                                "section": {
+                                    "id_section": section.id_section,
+                                    "name": section.name,
+                                    "order_number": section.order_number,
+                                } if section is not None else None,
+                            } if item is not None else None,
+                        })
+
+                return list(auditing_map.values())
+
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
                 raise CustomAPIException("Error al obtener en la base de datos", 500)

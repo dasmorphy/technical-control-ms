@@ -6,6 +6,7 @@ from datetime import date, datetime  # noqa: F401
 from typing import List, Dict  # noqa: F401
 
 from swagger_server.models.base_model_ import Model
+from swagger_server.models.materials_data import MaterialsData  # noqa: F401,E501
 from swagger_server import util
 
 
@@ -14,95 +15,50 @@ class TechnicalData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, created_at: str=None, reasons: List[int]=None, project: List[int]=None, id_truck_license: int=None, id_driver: int=None, initial_gasoline_id: int=None, final_gasoline_id: int=None, initial_km: str=None, final_km: str=None, driver_companion: List[int]=None, destiny: str=None, exit_point: str=None, observations: str=None, created_by: str=None, initial_images: List[str]=None, final_images: List[str]=None):  # noqa: E501
+    def __init__(self, materials: List[MaterialsData]=None, task_id: int=None, client_id: int=None, location_id: int=None, resume: str=None, user: str=None, images: List[str]=None):  # noqa: E501
         """TechnicalData - a model defined in Swagger
 
-        :param created_at: The created_at of this TechnicalData.  # noqa: E501
-        :type created_at: str
-        :param reasons: The reasons of this TechnicalData.  # noqa: E501
-        :type reasons: List[int]
-        :param project: The project of this TechnicalData.  # noqa: E501
-        :type project: List[int]
-        :param id_truck_license: The id_truck_license of this TechnicalData.  # noqa: E501
-        :type id_truck_license: int
-        :param id_driver: The id_driver of this TechnicalData.  # noqa: E501
-        :type id_driver: int
-        :param initial_gasoline_id: The initial_gasoline_id of this TechnicalData.  # noqa: E501
-        :type initial_gasoline_id: int
-        :param final_gasoline_id: The final_gasoline_id of this TechnicalData.  # noqa: E501
-        :type final_gasoline_id: int
-        :param initial_km: The initial_km of this TechnicalData.  # noqa: E501
-        :type initial_km: str
-        :param final_km: The final_km of this TechnicalData.  # noqa: E501
-        :type final_km: str
-        :param driver_companion: The driver_companion of this TechnicalData.  # noqa: E501
-        :type driver_companion: List[int]
-        :param destiny: The destiny of this TechnicalData.  # noqa: E501
-        :type destiny: str
-        :param exit_point: The exit_point of this TechnicalData.  # noqa: E501
-        :type exit_point: str
-        :param observations: The observations of this TechnicalData.  # noqa: E501
-        :type observations: str
-        :param created_by: The created_by of this TechnicalData.  # noqa: E501
-        :type created_by: str
-        :param initial_images: The initial_images of this TechnicalData.  # noqa: E501
-        :type initial_images: List[str]
-        :param final_images: The final_images of this TechnicalData.  # noqa: E501
-        :type final_images: List[str]
+        :param materials: The materials of this TechnicalData.  # noqa: E501
+        :type materials: List[MaterialsData]
+        :param task_id: The task_id of this TechnicalData.  # noqa: E501
+        :type task_id: int
+        :param client_id: The client_id of this TechnicalData.  # noqa: E501
+        :type client_id: int
+        :param location_id: The location_id of this TechnicalData.  # noqa: E501
+        :type location_id: int
+        :param resume: The resume of this TechnicalData.  # noqa: E501
+        :type resume: str
+        :param user: The user of this TechnicalData.  # noqa: E501
+        :type user: str
+        :param images: The images of this TechnicalData.  # noqa: E501
+        :type images: List[str]
         """
         self.swagger_types = {
-            'created_at': str,
-            'reasons': List[int],
-            'project': List[int],
-            'id_truck_license': int,
-            'id_driver': int,
-            'initial_gasoline_id': int,
-            'final_gasoline_id': int,
-            'initial_km': str,
-            'final_km': str,
-            'driver_companion': List[int],
-            'destiny': str,
-            'exit_point': str,
-            'observations': str,
-            'created_by': str,
-            'initial_images': List[str],
-            'final_images': List[str]
+            'materials': List[MaterialsData],
+            'task_id': int,
+            'client_id': int,
+            'location_id': int,
+            'resume': str,
+            'user': str,
+            'images': List[str]
         }
 
         self.attribute_map = {
-            'created_at': 'created_at',
-            'reasons': 'reasons',
-            'project': 'project',
-            'id_truck_license': 'id_truck_license',
-            'id_driver': 'id_driver',
-            'initial_gasoline_id': 'initial_gasoline_id',
-            'final_gasoline_id': 'final_gasoline_id',
-            'initial_km': 'initial_km',
-            'final_km': 'final_km',
-            'driver_companion': 'driver_companion',
-            'destiny': 'destiny',
-            'exit_point': 'exit_point',
-            'observations': 'observations',
-            'created_by': 'created_by',
-            'initial_images': 'initial_images',
-            'final_images': 'final_images'
+            'materials': 'materials',
+            'task_id': 'task_id',
+            'client_id': 'client_id',
+            'location_id': 'location_id',
+            'resume': 'resume',
+            'user': 'user',
+            'images': 'images'
         }
-        self._created_at = created_at
-        self._reasons = reasons
-        self._project = project
-        self._id_truck_license = id_truck_license
-        self._id_driver = id_driver
-        self._initial_gasoline_id = initial_gasoline_id
-        self._final_gasoline_id = final_gasoline_id
-        self._initial_km = initial_km
-        self._final_km = final_km
-        self._driver_companion = driver_companion
-        self._destiny = destiny
-        self._exit_point = exit_point
-        self._observations = observations
-        self._created_by = created_by
-        self._initial_images = initial_images
-        self._final_images = final_images
+        self._materials = materials
+        self._task_id = task_id
+        self._client_id = client_id
+        self._location_id = location_id
+        self._resume = resume
+        self._user = user
+        self._images = images
 
     @classmethod
     def from_dict(cls, dikt) -> 'TechnicalData':
@@ -116,337 +72,148 @@ class TechnicalData(Model):
         return util.deserialize_model(dikt, cls)
 
     @property
-    def created_at(self) -> str:
-        """Gets the created_at of this TechnicalData.
+    def materials(self) -> List[MaterialsData]:
+        """Gets the materials of this TechnicalData.
 
 
-        :return: The created_at of this TechnicalData.
-        :rtype: str
+        :return: The materials of this TechnicalData.
+        :rtype: List[MaterialsData]
         """
-        return self._created_at
+        return self._materials
 
-    @created_at.setter
-    def created_at(self, created_at: str):
-        """Sets the created_at of this TechnicalData.
+    @materials.setter
+    def materials(self, materials: List[MaterialsData]):
+        """Sets the materials of this TechnicalData.
 
 
-        :param created_at: The created_at of this TechnicalData.
-        :type created_at: str
+        :param materials: The materials of this TechnicalData.
+        :type materials: List[MaterialsData]
         """
 
-        self._created_at = created_at
+        self._materials = materials
 
     @property
-    def reasons(self) -> List[int]:
-        """Gets the reasons of this TechnicalData.
+    def task_id(self) -> int:
+        """Gets the task_id of this TechnicalData.
 
 
-        :return: The reasons of this TechnicalData.
-        :rtype: List[int]
-        """
-        return self._reasons
-
-    @reasons.setter
-    def reasons(self, reasons: List[int]):
-        """Sets the reasons of this TechnicalData.
-
-
-        :param reasons: The reasons of this TechnicalData.
-        :type reasons: List[int]
-        """
-
-        self._reasons = reasons
-
-    @property
-    def project(self) -> List[int]:
-        """Gets the project of this TechnicalData.
-
-
-        :return: The project of this TechnicalData.
-        :rtype: List[int]
-        """
-        return self._project
-
-    @project.setter
-    def project(self, project: List[int]):
-        """Sets the project of this TechnicalData.
-
-
-        :param project: The project of this TechnicalData.
-        :type project: List[int]
-        """
-
-        self._project = project
-
-    @property
-    def id_truck_license(self) -> int:
-        """Gets the id_truck_license of this TechnicalData.
-
-
-        :return: The id_truck_license of this TechnicalData.
+        :return: The task_id of this TechnicalData.
         :rtype: int
         """
-        return self._id_truck_license
+        return self._task_id
 
-    @id_truck_license.setter
-    def id_truck_license(self, id_truck_license: int):
-        """Sets the id_truck_license of this TechnicalData.
+    @task_id.setter
+    def task_id(self, task_id: int):
+        """Sets the task_id of this TechnicalData.
 
 
-        :param id_truck_license: The id_truck_license of this TechnicalData.
-        :type id_truck_license: int
+        :param task_id: The task_id of this TechnicalData.
+        :type task_id: int
         """
 
-        self._id_truck_license = id_truck_license
+        self._task_id = task_id
 
     @property
-    def id_driver(self) -> int:
-        """Gets the id_driver of this TechnicalData.
+    def client_id(self) -> int:
+        """Gets the client_id of this TechnicalData.
 
 
-        :return: The id_driver of this TechnicalData.
+        :return: The client_id of this TechnicalData.
         :rtype: int
         """
-        return self._id_driver
+        return self._client_id
 
-    @id_driver.setter
-    def id_driver(self, id_driver: int):
-        """Sets the id_driver of this TechnicalData.
+    @client_id.setter
+    def client_id(self, client_id: int):
+        """Sets the client_id of this TechnicalData.
 
 
-        :param id_driver: The id_driver of this TechnicalData.
-        :type id_driver: int
+        :param client_id: The client_id of this TechnicalData.
+        :type client_id: int
         """
 
-        self._id_driver = id_driver
+        self._client_id = client_id
 
     @property
-    def initial_gasoline_id(self) -> int:
-        """Gets the initial_gasoline_id of this TechnicalData.
+    def location_id(self) -> int:
+        """Gets the location_id of this TechnicalData.
 
 
-        :return: The initial_gasoline_id of this TechnicalData.
+        :return: The location_id of this TechnicalData.
         :rtype: int
         """
-        return self._initial_gasoline_id
+        return self._location_id
 
-    @initial_gasoline_id.setter
-    def initial_gasoline_id(self, initial_gasoline_id: int):
-        """Sets the initial_gasoline_id of this TechnicalData.
+    @location_id.setter
+    def location_id(self, location_id: int):
+        """Sets the location_id of this TechnicalData.
 
 
-        :param initial_gasoline_id: The initial_gasoline_id of this TechnicalData.
-        :type initial_gasoline_id: int
+        :param location_id: The location_id of this TechnicalData.
+        :type location_id: int
         """
 
-        self._initial_gasoline_id = initial_gasoline_id
+        self._location_id = location_id
 
     @property
-    def final_gasoline_id(self) -> int:
-        """Gets the final_gasoline_id of this TechnicalData.
+    def resume(self) -> str:
+        """Gets the resume of this TechnicalData.
 
 
-        :return: The final_gasoline_id of this TechnicalData.
-        :rtype: int
-        """
-        return self._final_gasoline_id
-
-    @final_gasoline_id.setter
-    def final_gasoline_id(self, final_gasoline_id: int):
-        """Sets the final_gasoline_id of this TechnicalData.
-
-
-        :param final_gasoline_id: The final_gasoline_id of this TechnicalData.
-        :type final_gasoline_id: int
-        """
-
-        self._final_gasoline_id = final_gasoline_id
-
-    @property
-    def initial_km(self) -> str:
-        """Gets the initial_km of this TechnicalData.
-
-
-        :return: The initial_km of this TechnicalData.
+        :return: The resume of this TechnicalData.
         :rtype: str
         """
-        return self._initial_km
+        return self._resume
 
-    @initial_km.setter
-    def initial_km(self, initial_km: str):
-        """Sets the initial_km of this TechnicalData.
+    @resume.setter
+    def resume(self, resume: str):
+        """Sets the resume of this TechnicalData.
 
 
-        :param initial_km: The initial_km of this TechnicalData.
-        :type initial_km: str
+        :param resume: The resume of this TechnicalData.
+        :type resume: str
         """
 
-        self._initial_km = initial_km
+        self._resume = resume
 
     @property
-    def final_km(self) -> str:
-        """Gets the final_km of this TechnicalData.
+    def user(self) -> str:
+        """Gets the user of this TechnicalData.
 
 
-        :return: The final_km of this TechnicalData.
+        :return: The user of this TechnicalData.
         :rtype: str
         """
-        return self._final_km
+        return self._user
 
-    @final_km.setter
-    def final_km(self, final_km: str):
-        """Sets the final_km of this TechnicalData.
+    @user.setter
+    def user(self, user: str):
+        """Sets the user of this TechnicalData.
 
 
-        :param final_km: The final_km of this TechnicalData.
-        :type final_km: str
+        :param user: The user of this TechnicalData.
+        :type user: str
         """
 
-        self._final_km = final_km
+        self._user = user
 
     @property
-    def driver_companion(self) -> List[int]:
-        """Gets the driver_companion of this TechnicalData.
+    def images(self) -> List[str]:
+        """Gets the images of this TechnicalData.
 
 
-        :return: The driver_companion of this TechnicalData.
-        :rtype: List[int]
-        """
-        return self._driver_companion
-
-    @driver_companion.setter
-    def driver_companion(self, driver_companion: List[int]):
-        """Sets the driver_companion of this TechnicalData.
-
-
-        :param driver_companion: The driver_companion of this TechnicalData.
-        :type driver_companion: List[int]
-        """
-
-        self._driver_companion = driver_companion
-
-    @property
-    def destiny(self) -> str:
-        """Gets the destiny of this TechnicalData.
-
-
-        :return: The destiny of this TechnicalData.
-        :rtype: str
-        """
-        return self._destiny
-
-    @destiny.setter
-    def destiny(self, destiny: str):
-        """Sets the destiny of this TechnicalData.
-
-
-        :param destiny: The destiny of this TechnicalData.
-        :type destiny: str
-        """
-
-        self._destiny = destiny
-
-    @property
-    def exit_point(self) -> str:
-        """Gets the exit_point of this TechnicalData.
-
-
-        :return: The exit_point of this TechnicalData.
-        :rtype: str
-        """
-        return self._exit_point
-
-    @exit_point.setter
-    def exit_point(self, exit_point: str):
-        """Sets the exit_point of this TechnicalData.
-
-
-        :param exit_point: The exit_point of this TechnicalData.
-        :type exit_point: str
-        """
-
-        self._exit_point = exit_point
-
-    @property
-    def observations(self) -> str:
-        """Gets the observations of this TechnicalData.
-
-
-        :return: The observations of this TechnicalData.
-        :rtype: str
-        """
-        return self._observations
-
-    @observations.setter
-    def observations(self, observations: str):
-        """Sets the observations of this TechnicalData.
-
-
-        :param observations: The observations of this TechnicalData.
-        :type observations: str
-        """
-
-        self._observations = observations
-
-    @property
-    def created_by(self) -> str:
-        """Gets the created_by of this TechnicalData.
-
-
-        :return: The created_by of this TechnicalData.
-        :rtype: str
-        """
-        return self._created_by
-
-    @created_by.setter
-    def created_by(self, created_by: str):
-        """Sets the created_by of this TechnicalData.
-
-
-        :param created_by: The created_by of this TechnicalData.
-        :type created_by: str
-        """
-
-        self._created_by = created_by
-
-    @property
-    def initial_images(self) -> List[str]:
-        """Gets the initial_images of this TechnicalData.
-
-
-        :return: The initial_images of this TechnicalData.
+        :return: The images of this TechnicalData.
         :rtype: List[str]
         """
-        return self._initial_images
+        return self._images
 
-    @initial_images.setter
-    def initial_images(self, initial_images: List[str]):
-        """Sets the initial_images of this TechnicalData.
+    @images.setter
+    def images(self, images: List[str]):
+        """Sets the images of this TechnicalData.
 
 
-        :param initial_images: The initial_images of this TechnicalData.
-        :type initial_images: List[str]
+        :param images: The images of this TechnicalData.
+        :type images: List[str]
         """
 
-        self._initial_images = initial_images
-
-    @property
-    def final_images(self) -> List[str]:
-        """Gets the final_images of this TechnicalData.
-
-
-        :return: The final_images of this TechnicalData.
-        :rtype: List[str]
-        """
-        return self._final_images
-
-    @final_images.setter
-    def final_images(self, final_images: List[str]):
-        """Sets the final_images of this TechnicalData.
-
-
-        :param final_images: The final_images of this TechnicalData.
-        :type final_images: List[str]
-        """
-
-        self._final_images = final_images
+        self._images = images

@@ -10,8 +10,6 @@ class TechnicalUseCase:
         self.technical_control_repository = technical_control_repository
 
     def post_technical_control(self, body, images, internal, external) -> None:
-        
-
         self.technical_control_repository.post_technical_control(body, images, internal, external)
 
     def put_technical_control(self, body, images, internal, external) -> None:
@@ -102,11 +100,26 @@ class TechnicalUseCase:
     def get_tech_record(self, params, internal, external):
         locations = params.get("locations")
         clients = params.get("clients")
-
+        tasks = params.get("tasks")
+        
         filters = {
             "locations": [int(x) for x in locations.split(",")] if locations else [],
             "clients": [int(x) for x in clients.split(",")] if clients else [],
+            "tasks": [int(x) for x in tasks.split(",")] if tasks else [],
         }
 
         return self.technical_control_repository.get_tech_record(filters, internal, external)
+    
+    def get_auditing(self, params, internal, external):
+        locations = params.get("locations")
+        clients = params.get("clients")
+        tasks = params.get("tasks")
+        
+        filters = {
+            "locations": [int(x) for x in locations.split(",")] if locations else [],
+            "clients": [int(x) for x in clients.split(",")] if clients else [],
+            "tasks": [int(x) for x in tasks.split(",")] if tasks else [],
+        }
+
+        return self.technical_control_repository.get_auditing(filters, internal, external)
 
