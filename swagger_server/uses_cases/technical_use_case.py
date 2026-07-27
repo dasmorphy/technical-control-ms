@@ -127,3 +127,6 @@ class TechnicalUseCase:
 
         return self.technical_control_repository.get_auditing(filters, internal, external)
 
+
+    def get_tech_materials(self, internal, external):
+        return self.technical_control_repository.get_tech_materials(internal, external)

@@ -24,6 +24,7 @@ from swagger_server.models.db.reasons_movilization import ReasonsMovilization
 from swagger_server.models.db.task_location import TaskLocation
 from swagger_server.models.db.task_technical import TaskTechnical
 from swagger_server.models.db.tech_record_image import TechRecordImage
+from swagger_server.models.db.technical_equipment import TechnicalEquipment
 from swagger_server.models.db.technical_record import TechnicalRecord
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
@@ -857,3 +858,41 @@ class TechnicalRepository:
 
             finally:
                 session.close()
+
+
+    def get_tech_materials(self, internal, external):
+            with self.db.session_factory() as session:
+                try:
+                    query_stmt = select(TechnicalEquipment)
+                    rows = session.execute(query_stmt).scalars().all()
+    
+                    data = [
+                        {
+                            "id_equipment": record.id_equipment,
+                            "code": record.code,
+                            "product": record.product,
+                            "unit": record.unit,
+                            "model": record.model,
+                            "base_price": record.base_price,
+                            "profit_margin": record.profit_margin,
+                            "profit_margin_dollar": record.profit_margin_dollar,
+                            "price": record.price,
+                            "provider": record.provider,
+                            "description": record.description,
+                            "stock": record.stock,
+                            "created_by": record.created_by,
+                            "updated_by": record.updated_by,
+                            "created_at": record.created_at,
+                            "updated_at": record.updated_at
+                        }
+                        for record in rows
+                    ]
+    
+                    return data
+                
+                except Exception as exception:
+                    logger.error('Error: {}', str(exception), internal=internal, external=external)
+                    if isinstance(exception, CustomAPIException):
+                        raise exception
+                    
+                    raise CustomAPIException("Error al obtener en la base de datos", 500)

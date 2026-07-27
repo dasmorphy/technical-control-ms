@@ -1098,3 +1098,55 @@ ALTER SEQUENCE technical.tech_record_image_id_seq
 
 ALTER TABLE IF EXISTS technical.tech_record_image
     ALTER COLUMN id_image SET DEFAULT nextval('technical.tech_record_image_id_seq'::regclass);
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+
+-- Table: technical.technical_equipment
+
+-- DROP TABLE IF EXISTS technical.technical_equipment;
+
+CREATE TABLE IF NOT EXISTS technical.technical_equipment
+(
+    id_equipment integer NOT NULL,
+    code text COLLATE pg_catalog."default",
+    product text COLLATE pg_catalog."default",
+    unit text COLLATE pg_catalog."default",
+    base_price numeric(12,2),
+    profit_margin numeric(12,2),
+    profit_margin_dollar numeric(12,2),
+    price numeric(12,2),
+    provider text COLLATE pg_catalog."default",
+    description text COLLATE pg_catalog."default",
+    stock integer,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    created_by text COLLATE pg_catalog."default",
+    updated_by text COLLATE pg_catalog."default",
+    model text COLLATE pg_catalog."default",
+    CONSTRAINT technical_equipment_pkey PRIMARY KEY (id_equipment)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.technical_equipment
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.technical_equipment_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.technical_equipment_id_seq
+    OWNED BY technical.technical_equipment.id_equipment;
+
+ALTER SEQUENCE technical.technical_equipment_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.technical_equipment
+    ALTER COLUMN id_equipment SET DEFAULT nextval('technical.technical_equipment_id_seq'::regclass);
