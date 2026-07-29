@@ -4,7 +4,10 @@ from loguru import logger
 from sqlalchemy.orm import aliased
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
+from swagger_server.models.auditing_data import AuditingData
 from swagger_server.models.db.auditing import Auditing
+from swagger_server.models.db.auditing_findings import AuditingFinding
+from swagger_server.models.db.auditing_findings_img import AuditingFindingsImg
 from swagger_server.models.db.auditing_item import AuditingItem
 from swagger_server.models.db.auditing_response import AuditingResponse
 from swagger_server.models.db.auditing_sections import AuditingSections
@@ -36,6 +39,8 @@ from sqlalchemy import ARRAY, JSON, Text, cast, distinct, exists, func, select, 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
 import getpass
+
+from swagger_server.utils.utils import calculate_score_percentage
 
 
 class TechnicalRepository:
@@ -433,8 +438,8 @@ class TechnicalRepository:
                 session.close()
 
 
-    def save_image(self, file):
-        folder = "/var/www/uploads/technical"
+    def save_image(self, file,  name_folder: str="technical"):
+        folder = f"/var/www/uploads/{name_folder}"
         ALLOWED_EXTENSIONS = {"webp"}
         MAX_FILENAME_LEN = 255
         MAX_BASENAME_LEN = 50
@@ -466,7 +471,7 @@ class TechnicalRepository:
         file.save(path)
 
         return {
-            "url": f"/uploads/technical/{filename}"
+            "url": f"/uploads/{name_folder}/{filename}"
         }
     
     def get_clients(self, internal, external):
@@ -799,16 +804,18 @@ class TechnicalRepository:
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
             
 
-    def post_auditing(self, data: TaskData, images, internal, external) -> None:
+    def post_auditing(self, data: AuditingData, images, internal, external) -> None:
         saved_files = []
 
         with self.db.session_factory() as session:
             try:
+                percentage = calculate_score_percentage(data.responses)
+                
                 new_auditing = Auditing(
                     task_id=data.task_id,
                     location_id=data.location_id,
                     responsible=data.responsible,
-                    percentage_compliance=data.percentage_compliance,
+                    percentage_compliance=percentage,
                     status=data.status,
                     created_by=data.user,
                     updated_by=data.user
@@ -822,11 +829,38 @@ class TechnicalRepository:
                         auditing_id=new_auditing.id_auditing,
                         item_id=response.item_id,
                         response=response.response,
-                        observation=data.observation,
+                        observation=response.observation,
                         created_by=data.user,
                         updated_by=data.user
                     )
                     session.add(new_response)
+
+                for finding in data.findings:
+                    new_finding= AuditingFinding(
+                        auditing_id=new_auditing.id_auditing,
+                        description=finding.description,
+                        criticality=finding.criticality,
+                        responsible=finding.responsible,
+                        commitment=finding.commitment,
+                    )
+                    session.add(new_finding)
+                    session.flush()
+
+                    # Guardar imágenes del hallazgo
+                    for image_name in finding.images:
+                        image = images.get(image_name)
+
+                        if image:
+                            result = self.save_image(image, "findings")
+
+                            new_image = AuditingFindingsImg(
+                                finding_auditing_id=new_finding.id_finding,
+                                path=result["url"],
+                                created_by=data.user,
+                                updated_by=data.user,
+                            )
+
+                            session.add(new_image)
 
                 signature = AuditingSignaturesImg(
                     auditing_id=new_auditing.id_auditing
@@ -896,3 +930,53 @@ class TechnicalRepository:
                         raise exception
                     
                     raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+
+    def get_auditing_sections(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = (
+                    select(AuditingSections, AuditingItem)
+                    .outerjoin(
+                        AuditingItem,
+                        AuditingItem.section_id == AuditingSections.id_section
+                    )
+                    .order_by(
+                        AuditingSections.order_number.asc(),
+                        AuditingItem.order_number.asc()
+                    )
+                )
+
+                rows = session.execute(query_stmt).all()
+
+                sections = {}
+
+                for section, item in rows:
+                    if section.id_section not in sections:
+                        sections[section.id_section] = {
+                            "id_section": section.id_section,
+                            "name": section.name,
+                            "order_number": section.order_number,
+                            "items": [],
+                            "created_by": section.created_by,
+                            "created_at": section.created_at,
+                        }
+
+                    if item:
+                        sections[section.id_section]["items"].append({
+                            "id_item": item.id_item,
+                            "name": item.name,
+                            "order_number": item.order_number,
+                            "created_by": item.created_by,
+                            "created_at": item.created_at,
+                        })
+
+                return list(sections.values())
+
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al obtener en la base de datos", 500)

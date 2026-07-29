@@ -1150,3 +1150,81 @@ ALTER SEQUENCE technical.technical_equipment_id_seq
 
 ALTER TABLE IF EXISTS technical.technical_equipment
     ALTER COLUMN id_equipment SET DEFAULT nextval('technical.technical_equipment_id_seq'::regclass);
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.auditing_findings
+(
+    id_finding integer NOT NULL,
+    auditing_id integer,
+    description text,
+    criticality text,
+    responsible text,
+    commitment text,
+    created_at timestamp without time zone DEFAULT now(),
+    PRIMARY KEY (id_finding),
+    CONSTRAINT finding_auditing_id_fkey FOREIGN KEY (auditing_id)
+        REFERENCES technical.auditing (id_auditing) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing_findings
+    OWNER to nextgen;
+
+CREATE SEQUENCE technical.auditing_findings_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.auditing_findings_id_seq
+    OWNED BY technical.auditing_findings.id_finding;
+
+ALTER SEQUENCE technical.auditing_findings_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing_findings
+    ALTER COLUMN id_finding SET DEFAULT nextval('technical.auditing_findings_id_seq'::regclass);
+
+------------------------------------------------------------------------------------------------------------------------------
+
+
+CREATE TABLE technical.auditing_findings_img
+(
+    id_image integer NOT NULL,
+    finding_auditing_id integer,
+    img_path text,
+    created_at timestamp without time zone DEFAULT now(),
+    PRIMARY KEY (id_image),
+    CONSTRAINT img_finding_id_fkey FOREIGN KEY (finding_auditing_id)
+        REFERENCES technical.auditing_findings (id_finding) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.auditing_findings_img
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.auditing_findings_img_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.auditing_findings_img_id_seq
+    OWNED BY technical.auditing_findings_img.id_image;
+
+ALTER SEQUENCE technical.auditing_findings_img_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.auditing_findings_img
+    ALTER COLUMN id_image SET DEFAULT nextval('technical.auditing_findings_img_id_seq'::regclass);

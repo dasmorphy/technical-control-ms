@@ -74,3 +74,32 @@ def get_date_range(fecha_inicio=None, fecha_fin=None):
     end = start + timedelta(days=1)
 
     return start, end
+
+def calculate_score_percentage(items):
+    """
+    Calcula el porcentaje de cumplimiento.
+
+    Reglas:
+    - "si"  = 100%
+    - "no"  = 0%
+    - "n/a" = no se considera
+
+    Parámetro:
+        items: lista de diccionarios con la propiedad 'response'
+
+    Retorna:
+        float: porcentaje entre 0 y 100.
+    """
+
+    valid_answers = [
+        item["response"].strip().lower()
+        for item in items
+        if item.get("response") and item["response"].strip().lower() != "n/a"
+    ]
+
+    if not valid_answers:
+        return 0.0
+
+    positive_answers = sum(answer == "si" for answer in valid_answers)
+
+    return round((positive_answers / len(valid_answers)) * 100, 2)

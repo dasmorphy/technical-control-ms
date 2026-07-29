@@ -6,6 +6,7 @@ from datetime import date, datetime  # noqa: F401
 from typing import List, Dict  # noqa: F401
 
 from swagger_server.models.base_model_ import Model
+from swagger_server.models.finding_auditing_data import FindingAuditingData  # noqa: F401,E501
 from swagger_server.models.response_auditing_data import ResponseAuditingData  # noqa: F401,E501
 from swagger_server import util
 
@@ -15,39 +16,49 @@ class AuditingData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, responses: List[ResponseAuditingData]=None, task_id: int=None, location_id: int=None, responsible: str=None, user: str=None):  # noqa: E501
+    def __init__(self, responses: List[ResponseAuditingData]=None, findings: List[FindingAuditingData]=None, task_id: int=None, location_id: int=None, responsible: str=None, status: str=None, user: str=None):  # noqa: E501
         """AuditingData - a model defined in Swagger
 
         :param responses: The responses of this AuditingData.  # noqa: E501
         :type responses: List[ResponseAuditingData]
+        :param findings: The findings of this AuditingData.  # noqa: E501
+        :type findings: List[FindingAuditingData]
         :param task_id: The task_id of this AuditingData.  # noqa: E501
         :type task_id: int
         :param location_id: The location_id of this AuditingData.  # noqa: E501
         :type location_id: int
         :param responsible: The responsible of this AuditingData.  # noqa: E501
         :type responsible: str
+        :param status: The status of this AuditingData.  # noqa: E501
+        :type status: str
         :param user: The user of this AuditingData.  # noqa: E501
         :type user: str
         """
         self.swagger_types = {
             'responses': List[ResponseAuditingData],
+            'findings': List[FindingAuditingData],
             'task_id': int,
             'location_id': int,
             'responsible': str,
+            'status': str,
             'user': str
         }
 
         self.attribute_map = {
             'responses': 'responses',
+            'findings': 'findings',
             'task_id': 'task_id',
             'location_id': 'location_id',
             'responsible': 'responsible',
+            'status': 'status',
             'user': 'user'
         }
         self._responses = responses
+        self._findings = findings
         self._task_id = task_id
         self._location_id = location_id
         self._responsible = responsible
+        self._status = status
         self._user = user
 
     @classmethod
@@ -81,6 +92,27 @@ class AuditingData(Model):
         """
 
         self._responses = responses
+
+    @property
+    def findings(self) -> List[FindingAuditingData]:
+        """Gets the findings of this AuditingData.
+
+
+        :return: The findings of this AuditingData.
+        :rtype: List[FindingAuditingData]
+        """
+        return self._findings
+
+    @findings.setter
+    def findings(self, findings: List[FindingAuditingData]):
+        """Sets the findings of this AuditingData.
+
+
+        :param findings: The findings of this AuditingData.
+        :type findings: List[FindingAuditingData]
+        """
+
+        self._findings = findings
 
     @property
     def task_id(self) -> int:
@@ -144,6 +176,27 @@ class AuditingData(Model):
         """
 
         self._responsible = responsible
+
+    @property
+    def status(self) -> str:
+        """Gets the status of this AuditingData.
+
+
+        :return: The status of this AuditingData.
+        :rtype: str
+        """
+        return self._status
+
+    @status.setter
+    def status(self, status: str):
+        """Sets the status of this AuditingData.
+
+
+        :param status: The status of this AuditingData.
+        :type status: str
+        """
+
+        self._status = status
 
     @property
     def user(self) -> str:
