@@ -580,7 +580,9 @@ class TechnicalRepository:
                         "id_task": task.id_task,
                         "name": task.name,
                         "client": client.name,
+                        "client_id": client.id_client,
                         "description": task.description,
+                        "locaton_id": location.id_location if location else None,
                         "location": location.name if location else None,
                         "code": task.code,
                         "status": task.status,
@@ -853,7 +855,7 @@ class TechnicalRepository:
 
                         if image:
                             result = self.save_image(image, "findings")
-
+                            saved_files.append(result["url"])
                             new_image = AuditingFindingsImg(
                                 finding_auditing_id=new_finding.id_finding,
                                 img_path=result["url"],
@@ -882,8 +884,15 @@ class TechnicalRepository:
                 session.add(signature)
                 session.commit()
             except Exception as exception:
-                session.rollback()
                 logger.error('Error: {}', str(exception), internal=internal, external=external)
+                session.rollback()
+
+                #limpia archivos guardados si falla DB
+                for path in saved_files:
+                    full_path = os.path.join("/var/www", path.lstrip("/"))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+
                 if isinstance(exception, CustomAPIException):
                     raise exception
                 
