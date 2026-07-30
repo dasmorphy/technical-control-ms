@@ -1,6 +1,9 @@
 from datetime import date, datetime, timedelta
+from typing import List
 from pytz import timezone
 import re
+
+from swagger_server.models.response_auditing_data import ResponseAuditingData
 
 # Funciones de utilidad para el sistema completo.
 
@@ -75,7 +78,7 @@ def get_date_range(fecha_inicio=None, fecha_fin=None):
 
     return start, end
 
-def calculate_score_percentage(items):
+def calculate_score_percentage(items: List[ResponseAuditingData]):
     """
     Calcula el porcentaje de cumplimiento.
 
@@ -92,9 +95,9 @@ def calculate_score_percentage(items):
     """
 
     valid_answers = [
-        item["response"].strip().lower()
+        item.response.strip().lower()
         for item in items
-        if item.get("response") and item["response"].strip().lower() != "n/a"
+        if item.response and item.response.strip().lower() != "n/a"
     ]
 
     if not valid_answers:
