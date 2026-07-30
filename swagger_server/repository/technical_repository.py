@@ -868,6 +868,10 @@ class TechnicalRepository:
                     "responsible_path",
                     "client_path",
                 ]
+                
+                signature = AuditingSignaturesImg(
+                    auditing_id=new_auditing.id_auditing,
+                )
 
                 for field in fields:
                     image = images.get(field.replace("_path", "_img"))
@@ -875,9 +879,6 @@ class TechnicalRepository:
                     if image:
                         result = self.save_image(image, "signatures")
                         saved_files.append(result["url"])
-                        signature = AuditingSignaturesImg(
-                            auditing_id=new_auditing.id_auditing,
-                        )
                         setattr(signature, field, result["url"])
 
                 session.add(signature)
