@@ -15,7 +15,7 @@ class AuditingSignaturesImg(Base):
     __tablename__ = "auditing_signatures_img"
     __table_args__ = {"schema": "technical"}
 
-    id_image = Column(
+    id_signature = Column(
         Integer,
         Sequence("auditing_signatures_id_seq", schema="technical"),
         primary_key=True,
