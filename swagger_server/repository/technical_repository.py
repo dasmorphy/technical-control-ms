@@ -875,7 +875,7 @@ class TechnicalRepository:
                 for image_key, model_attr in fields.items():
                     image = images.get(image_key)
                     if image:
-                        result = self.save_image(image)
+                        result = self.save_image(image, "signatures")
                         saved_files.append(result["url"])
                         setattr(signature, model_attr, result["url"])
 
