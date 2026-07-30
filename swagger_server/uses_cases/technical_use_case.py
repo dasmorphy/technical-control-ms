@@ -97,7 +97,7 @@ class TechnicalUseCase:
         self.technical_control_repository.post_task(data, internal, external)
 
     
-    def post_auditing(self, data: TaskData, images, internal, external):
+    def post_auditing(self, data, images, internal, external):
         self.technical_control_repository.post_auditing(data, images, internal, external)
 
     

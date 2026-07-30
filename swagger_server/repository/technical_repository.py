@@ -804,50 +804,51 @@ class TechnicalRepository:
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
             
 
-    def post_auditing(self, data: AuditingData, images, internal, external) -> None:
+    def post_auditing(self, data, images, internal, external) -> None:
         saved_files = []
 
         with self.db.session_factory() as session:
             try:
-                percentage = calculate_score_percentage(data.responses)
+                data_dict = data.get("data")
+                percentage = calculate_score_percentage(data_dict.get("responses"))
                 
                 new_auditing = Auditing(
-                    task_id=data.task_id,
-                    location_id=data.location_id,
-                    responsible=data.responsible,
+                    task_id=data_dict.get("task_id"),
+                    location_id=data_dict.get("location_id"),
+                    responsible=data_dict.get("responsible"),
                     percentage_compliance=percentage,
-                    status=data.status,
-                    created_by=data.user,
-                    updated_by=data.user
+                    status=data_dict.get("status"),
+                    created_by=data_dict.get("user"),
+                    updated_by=data_dict.get("user")
                 )
 
                 session.add(new_auditing)
                 session.flush()
                 
-                for response in data.responses:
+                for response in data_dict.get("responses"):
                     new_response= AuditingResponse(
                         auditing_id=new_auditing.id_auditing,
-                        item_id=response.item_id,
-                        response=response.response,
-                        observation=response.observation,
-                        created_by=data.user,
-                        updated_by=data.user
+                        item_id=response.get("item_id"),
+                        response=response.get("response"),
+                        observation=response.get("observation"),
+                        created_by=data_dict.get("user"),
+                        updated_by=data_dict.get("user")
                     )
                     session.add(new_response)
 
-                for finding in data.findings:
+                for finding in data_dict.get("findings"):
                     new_finding= AuditingFinding(
                         auditing_id=new_auditing.id_auditing,
-                        description=finding.description,
-                        criticality=finding.criticality,
-                        responsible=finding.responsible,
-                        commitment=finding.commitment,
+                        description=finding.get("description"),
+                        criticality=finding.get("criticality"),
+                        responsible=finding.get("responsible"),
+                        commitment=finding.get("commitment"),
                     )
                     session.add(new_finding)
                     session.flush()
 
                     # Guardar imágenes del hallazgo
-                    for image_name in finding.images:
+                    for image_name in finding.get("images"):
                         image = images.get(image_name)
 
                         if image:
