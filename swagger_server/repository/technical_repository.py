@@ -856,9 +856,8 @@ class TechnicalRepository:
 
                             new_image = AuditingFindingsImg(
                                 finding_auditing_id=new_finding.id_finding,
-                                path=result["url"],
+                                img_path=result["url"],
                                 created_by=data_dict.get("user"),
-                                updated_by=data_dict.get("user"),
                             )
 
                             session.add(new_image)
