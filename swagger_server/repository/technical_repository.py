@@ -863,24 +863,23 @@ class TechnicalRepository:
 
                             session.add(new_image)
 
-                signature = AuditingSignaturesImg(
-                    auditing_id=new_auditing.id_auditing
-                )
+                fields = [
+                    "auditor_path",
+                    "responsible_path",
+                    "client_path",
+                ]
 
-                fields = {
-                    "auditor_img": "auditor_path",
-                    "responsible_img": "responsible_path",
-                    "client_img": "client_path",
-                }
+                for field in fields:
+                    image = images.get(field.replace("_path", "_img"))
 
-                for image_key, model_attr in fields.items():
-                    image = images.get(image_key)
                     if image:
                         result = self.save_image(image, "signatures")
                         saved_files.append(result["url"])
-                        setattr(signature, model_attr, result["url"])
-
-                session.add(signature)
+                        signature = AuditingSignaturesImg(
+                            auditing_id=new_auditing.id_auditing,
+                        )
+                        setattr(signature, field, result["url"])
+                        session.add(signature)
 
                 session.commit()
             except Exception as exception:
