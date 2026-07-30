@@ -504,18 +504,12 @@ class TechnicalView(MethodView):
                 response["external_transaction_id"] = external_transaction_id
                 message = f"start request: {function_name}, channel: {auditing_dict['channel']}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
-                auditor_img = request.files.get("auditor_img")
-                responsible_img = request.files.get("responsible_img")
-                client_img = request.files.get("client_img")
+                images = {}
+                for key, file in request.files.items():
+                    if key != "data":
+                        images[key] = file
                 self.technical_use_case.post_auditing(
-                    auditing_dict,
-                    {
-                        "auditor_img": auditor_img,
-                        "responsible_img": responsible_img,
-                        "client_img": client_img,
-                    },
-                    internal_transaction_id,
-                    external_transaction_id
+                    auditing_dict, images, internal_transaction_id, external_transaction_id
                 )
                 response["error_code"] = 0
                 response["message"] = "Control técnico actualizado correctamente"
