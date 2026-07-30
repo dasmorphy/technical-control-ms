@@ -879,8 +879,8 @@ class TechnicalRepository:
                             auditing_id=new_auditing.id_auditing,
                         )
                         setattr(signature, field, result["url"])
-                        session.add(signature)
 
+                session.add(signature)
                 session.commit()
             except Exception as exception:
                 session.rollback()
