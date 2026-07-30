@@ -34,7 +34,7 @@ from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import ARRAY, JSON, Text, cast, distinct, exists, func, select, text
+from sqlalchemy import ARRAY, JSON, Text, cast, distinct, exists, func, select, text, update
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -317,12 +317,32 @@ class TechnicalRepository:
         with self.db.session_factory() as session:
             try:
 
+                has_records = session.scalar(
+                    select(
+                        exists().where(
+                            TechnicalRecord.task_id == data.get("task_id")
+                        )
+                    )
+                )
+
+                # Si es el primer registro, actualizar el estado de la tarea
+                if not has_records:
+                    session.execute(
+                        update(TaskTechnical)
+                        .where(TaskTechnical.id_task == data.get("task_id"))
+                        .values(
+                            status="En ejecución",
+                            updated_by=data.get("user")
+                        )
+                    )
+
                 technical_record = TechnicalRecord(
                     task_id=data.get('task_id'),
                     client_id=data.get('client_id'),
                     location_id=data.get('location_id'),
                     resume=data.get('resume'),
                     created_by=data.get('user'),
+                    updated_by=data.get('user'),
                 )
 
                 session.add(technical_record)
