@@ -14,7 +14,7 @@ class TaskData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, location_id: int=None, name: str=None, description: str=None, code: str=None, user: str=None):  # noqa: E501
+    def __init__(self, location_id: int=None, name: str=None, description: str=None, user: str=None):  # noqa: E501
         """TaskData - a model defined in Swagger
 
         :param location_id: The location_id of this TaskData.  # noqa: E501
@@ -23,8 +23,6 @@ class TaskData(Model):
         :type name: str
         :param description: The description of this TaskData.  # noqa: E501
         :type description: str
-        :param code: The code of this TaskData.  # noqa: E501
-        :type code: str
         :param user: The user of this TaskData.  # noqa: E501
         :type user: str
         """
@@ -32,7 +30,6 @@ class TaskData(Model):
             'location_id': int,
             'name': str,
             'description': str,
-            'code': str,
             'user': str
         }
 
@@ -40,13 +37,11 @@ class TaskData(Model):
             'location_id': 'location_id',
             'name': 'name',
             'description': 'description',
-            'code': 'code',
             'user': 'user'
         }
         self._location_id = location_id
         self._name = name
         self._description = description
-        self._code = code
         self._user = user
 
     @classmethod
@@ -122,27 +117,6 @@ class TaskData(Model):
         """
 
         self._description = description
-
-    @property
-    def code(self) -> str:
-        """Gets the code of this TaskData.
-
-
-        :return: The code of this TaskData.
-        :rtype: str
-        """
-        return self._code
-
-    @code.setter
-    def code(self, code: str):
-        """Sets the code of this TaskData.
-
-
-        :param code: The code of this TaskData.
-        :type code: str
-        """
-
-        self._code = code
 
     @property
     def user(self) -> str:

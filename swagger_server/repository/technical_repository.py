@@ -622,15 +622,25 @@ class TechnicalRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
-            
+
+    def generate_project_code(session):
+        next_id = session.execute(
+            text("SELECT nextval('technical.task_technical_id_seq')")
+        ).scalar_one()
+
+        code = f"TLSG-PRY-{next_id:04d}"
+
+        return code
+
 
     def post_task(self, data: TaskData, internal, external) -> None:
         with self.db.session_factory() as session:
             try:
+                code_generated = self.generate_project_code(session)
                 new_task = TaskTechnical(
                     name=data.name,
                     description=data.description,
-                    code=data.code,
+                    code=code_generated,
                     status="Aprobado",
                     created_by=data.user,
                     updated_by=data.user

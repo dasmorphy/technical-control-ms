@@ -220,13 +220,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
-  /task:
+  /project:
     get:
       tags:
-      - Task
-      summary: Obtiene todos las tareas / actividades de los tecnicos
-      description: Devuelve todos las tareas / actividades de la base
-      operationId: get_task
+      - Project
+      summary: Obtiene todos los proyectos de los tecnicos
+      description: Devuelve todos los proyectos de la base
+      operationId: get_project
       parameters:
         - name: locations
           in: query
@@ -286,10 +286,10 @@ paths:
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
     post:
       tags:
-      - Task
-      summary: Guarda las tareas en la base de datos.
-      description: Guardado de tareas de tecnicos
-      operationId: post_task
+      - Project
+      summary: Guarda los proyectos en la base de datos.
+      description: Guardado de proyectos de tecnicos
+      operationId: post_project
       requestBody:
         content:
           application/json:
@@ -1236,9 +1236,6 @@ components:
         description:
           type: string
           example: "N/A"
-        code:
-          type: string
-          example: "TASK-TEST-001"
         user:
           type: string
           example: "dmales"

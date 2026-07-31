@@ -330,7 +330,7 @@ class TechnicalView(MethodView):
         return response, status_code
     
 
-    def get_task(self):
+    def get_project(self):
         internal_process = (None, None)
         function_name = "get_task"
         response = {}
@@ -359,7 +359,7 @@ class TechnicalView(MethodView):
         return response, status_code
     
     
-    def post_task(self):
+    def post_project(self):
         internal_process = (None, None)
         function_name = "post_task"
         response = {}
