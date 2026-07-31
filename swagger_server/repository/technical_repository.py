@@ -623,7 +623,7 @@ class TechnicalRepository:
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
 
-    def generate_project_code(session):
+    def generate_project_code(self, session):
         next_id = session.execute(
             text("SELECT nextval('technical.task_technical_id_seq')")
         ).scalar_one()
