@@ -562,11 +562,31 @@ class TechnicalRepository:
     def get_task(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
+                tech_record_subq = (
+                    select(
+                        TechnicalRecord.task_id.label("task_id"),
+                        func.json_agg(
+                            func.json_build_object(
+                                "id_record", TechnicalRecord.id_record,
+                                "client_id", TechnicalRecord.client_id,
+                                "location_id", TechnicalRecord.location_id,
+                                "resume", TechnicalRecord.resume,
+                                "created_by", TechnicalRecord.created_by,
+                                "created_at", TechnicalRecord.created_at,
+                            )
+                        ).label("record_technical")
+                    )
+                    .group_by(TechnicalRecord.task_id)
+                    .subquery()
+                )
+
+
                 query_stmt = (
                     select(
                         TaskTechnical,
                         ClientLocation,
-                        Client
+                        Client,
+                        tech_record_subq.c.record_technical
                     )
                     .outerjoin(
                         TaskLocation,
@@ -579,6 +599,10 @@ class TechnicalRepository:
                     .outerjoin(
                         Client,
                         Client.id_client == ClientLocation.client_id
+                    )
+                    .outerjoin(
+                        tech_record_subq,
+                        tech_record_subq.c.task_id == TaskTechnical.id_task
                     )
                     .order_by(TaskTechnical.created_at.desc())
                 )
@@ -607,12 +631,13 @@ class TechnicalRepository:
                         "location": location.name if location else None,
                         "code": task.code,
                         "status": task.status,
+                        "record_technical": record_technical or None,
                         "created_by": task.created_by,
                         "updated_by": task.updated_by,
                         "created_at": task.created_at,
                         "updated_at": task.updated_at
                     }
-                    for task, location, client in rows
+                    for task, location, client, record_technical in rows
                 ]
 
                 return data
