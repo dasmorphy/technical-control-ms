@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 
 from loguru import logger
@@ -1018,3 +1019,36 @@ class TechnicalRepository:
                     raise exception
 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+
+    def update_status_project(self, id_task: int, body, internal: str, external: str) -> None:
+        with self.db.session_factory() as session:
+            try:
+                project = session.execute(
+                    select(TaskTechnical)
+                    .where(TaskTechnical.id_task == id_task)
+                    .with_for_update()
+                ).scalar_one_or_none()
+
+                if not project:
+                    raise CustomAPIException(
+                        message="No existe el proyecto",
+                        status_code=404
+                    )
+
+                project.status = body["new_status"]
+                project.updated_by = body["user"]
+                project.updated_at = datetime.now()
+
+                session.commit()
+
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al actualizar en la base de datos", 500)
+
+            finally:
+                session.close()

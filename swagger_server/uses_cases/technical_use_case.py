@@ -133,3 +133,6 @@ class TechnicalUseCase:
 
     def get_auditing_sections(self, internal, external):
         return self.technical_control_repository.get_auditing_sections(internal, external)
+
+    def update_status_project(self, id_task: int, body, internal: str, external: str) -> None:
+        self.technical_control_repository.update_status_project(id_task, body, internal, external)
