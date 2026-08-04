@@ -28,8 +28,10 @@ from swagger_server.models.db.reasons_movilization import ReasonsMovilization
 from swagger_server.models.db.task_location import TaskLocation
 from swagger_server.models.db.task_technical import TaskTechnical
 from swagger_server.models.db.tech_record_image import TechRecordImage
+from swagger_server.models.db.tech_staff_record import TechStaffRecord
 from swagger_server.models.db.technical_equipment import TechnicalEquipment
 from swagger_server.models.db.technical_record import TechnicalRecord
+from swagger_server.models.db.technical_staff import TechnicalStaff
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
@@ -358,6 +360,13 @@ class TechnicalRepository:
                         material=material.get('material')
                     )
                     session.add(material_tech)
+
+                for tech_staff_id in data.get('technical_staff'):
+                    tech_staff_record = TechStaffRecord(
+                        record_id=record_technical_id,
+                        tech_staff_id=tech_staff_id
+                    )
+                    session.add(tech_staff_record)
 
                 #Guardar imágenes (máx 10)
                 for file in images[:10]:
@@ -1077,3 +1086,30 @@ class TechnicalRepository:
 
             finally:
                 session.close()
+
+    def get_technical_staff(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = select(TechnicalStaff)
+                rows = session.execute(query_stmt).scalars().all()
+
+                data = [
+                    {
+                        "id_staff": record.id_technical,
+                        "name": record.name,
+                        "created_by": record.created_by,
+                        "updated_by": record.updated_by,
+                        "created_at": record.created_at,
+                        "updated_at": record.updated_at
+                    }
+                    for record in rows
+                ]
+
+                return data
+            
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)

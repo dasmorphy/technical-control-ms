@@ -136,3 +136,6 @@ class TechnicalUseCase:
 
     def update_status_project(self, id_task: int, body, internal: str, external: str) -> None:
         self.technical_control_repository.update_status_project(id_task, body, internal, external)
+
+    def get_technical_staff(self, internal, external):
+        return self.technical_control_repository.get_technical_staff(internal, external)

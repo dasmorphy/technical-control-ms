@@ -1228,3 +1228,82 @@ ALTER SEQUENCE technical.auditing_findings_img_id_seq
 
 ALTER TABLE IF EXISTS technical.auditing_findings_img
     ALTER COLUMN id_image SET DEFAULT nextval('technical.auditing_findings_img_id_seq'::regclass);
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.technical_staff
+(
+    id_technical integer NOT NULL,
+    name text,
+    created_by text,
+    updated_by text,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT technical_staff_pkey PRIMARY KEY (id_technical)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.technical_staff
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.technical_staff_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.technical_staff_id_seq
+    OWNED BY technical.technical_staff.id_technical;
+
+ALTER SEQUENCE technical.technical_staff_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.technical_staff
+    ALTER COLUMN id_technical SET DEFAULT nextval('technical.technical_staff_id_seq'::regclass);
+
+
+----------------------------------------------------------------------------------------------------------------------
+
+
+CREATE TABLE technical.tech_staff_record
+(
+    id_staff_record integer NOT NULL,
+    record_id integer,
+    tech_staff_id integer,
+    created_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT staff_record_pkey PRIMARY KEY (id_staff_record),
+    CONSTRAINT record_id_fkey FOREIGN KEY (record_id)
+        REFERENCES technical.technical_record (id_record) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT tech_staff_id_fkey FOREIGN KEY (tech_staff_id)
+        REFERENCES technical.technical_staff (id_technical) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.tech_staff_record
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.tech_staff_record_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.tech_staff_record_id_seq
+    OWNED BY technical.tech_staff_record.id_staff_record;
+
+ALTER SEQUENCE technical.tech_staff_record_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.tech_staff_record
+    ALTER COLUMN id_staff_record SET DEFAULT nextval('technical.tech_staff_record_id_seq'::regclass);

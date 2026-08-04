@@ -15,7 +15,7 @@ class TechnicalData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, materials: List[MaterialsData]=None, task_id: int=None, client_id: int=None, location_id: int=None, resume: str=None, user: str=None, images: List[str]=None):  # noqa: E501
+    def __init__(self, materials: List[MaterialsData]=None, task_id: int=None, client_id: int=None, location_id: int=None, technical_staff: List[float]=None, resume: str=None, user: str=None, images: List[str]=None):  # noqa: E501
         """TechnicalData - a model defined in Swagger
 
         :param materials: The materials of this TechnicalData.  # noqa: E501
@@ -26,6 +26,8 @@ class TechnicalData(Model):
         :type client_id: int
         :param location_id: The location_id of this TechnicalData.  # noqa: E501
         :type location_id: int
+        :param technical_staff: The technical_staff of this TechnicalData.  # noqa: E501
+        :type technical_staff: List[float]
         :param resume: The resume of this TechnicalData.  # noqa: E501
         :type resume: str
         :param user: The user of this TechnicalData.  # noqa: E501
@@ -38,6 +40,7 @@ class TechnicalData(Model):
             'task_id': int,
             'client_id': int,
             'location_id': int,
+            'technical_staff': List[float],
             'resume': str,
             'user': str,
             'images': List[str]
@@ -48,6 +51,7 @@ class TechnicalData(Model):
             'task_id': 'task_id',
             'client_id': 'client_id',
             'location_id': 'location_id',
+            'technical_staff': 'technical_staff',
             'resume': 'resume',
             'user': 'user',
             'images': 'images'
@@ -56,6 +60,7 @@ class TechnicalData(Model):
         self._task_id = task_id
         self._client_id = client_id
         self._location_id = location_id
+        self._technical_staff = technical_staff
         self._resume = resume
         self._user = user
         self._images = images
@@ -154,6 +159,27 @@ class TechnicalData(Model):
         """
 
         self._location_id = location_id
+
+    @property
+    def technical_staff(self) -> List[float]:
+        """Gets the technical_staff of this TechnicalData.
+
+
+        :return: The technical_staff of this TechnicalData.
+        :rtype: List[float]
+        """
+        return self._technical_staff
+
+    @technical_staff.setter
+    def technical_staff(self, technical_staff: List[float]):
+        """Sets the technical_staff of this TechnicalData.
+
+
+        :param technical_staff: The technical_staff of this TechnicalData.
+        :type technical_staff: List[float]
+        """
+
+        self._technical_staff = technical_staff
 
     @property
     def resume(self) -> str:
