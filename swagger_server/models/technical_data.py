@@ -15,7 +15,7 @@ class TechnicalData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, materials: List[MaterialsData]=None, task_id: int=None, client_id: int=None, location_id: int=None, technical_staff: List[float]=None, resume: str=None, user: str=None, images: List[str]=None):  # noqa: E501
+    def __init__(self, materials: List[MaterialsData]=None, task_id: int=None, client_id: int=None, location_id: int=None, technical_staff: List[float]=None, resume: str=None, vehicle: str=None, user: str=None, images: List[str]=None):  # noqa: E501
         """TechnicalData - a model defined in Swagger
 
         :param materials: The materials of this TechnicalData.  # noqa: E501
@@ -30,6 +30,8 @@ class TechnicalData(Model):
         :type technical_staff: List[float]
         :param resume: The resume of this TechnicalData.  # noqa: E501
         :type resume: str
+        :param vehicle: The vehicle of this TechnicalData.  # noqa: E501
+        :type vehicle: str
         :param user: The user of this TechnicalData.  # noqa: E501
         :type user: str
         :param images: The images of this TechnicalData.  # noqa: E501
@@ -42,6 +44,7 @@ class TechnicalData(Model):
             'location_id': int,
             'technical_staff': List[float],
             'resume': str,
+            'vehicle': str,
             'user': str,
             'images': List[str]
         }
@@ -53,6 +56,7 @@ class TechnicalData(Model):
             'location_id': 'location_id',
             'technical_staff': 'technical_staff',
             'resume': 'resume',
+            'vehicle': 'vehicle',
             'user': 'user',
             'images': 'images'
         }
@@ -62,6 +66,7 @@ class TechnicalData(Model):
         self._location_id = location_id
         self._technical_staff = technical_staff
         self._resume = resume
+        self._vehicle = vehicle
         self._user = user
         self._images = images
 
@@ -201,6 +206,27 @@ class TechnicalData(Model):
         """
 
         self._resume = resume
+
+    @property
+    def vehicle(self) -> str:
+        """Gets the vehicle of this TechnicalData.
+
+
+        :return: The vehicle of this TechnicalData.
+        :rtype: str
+        """
+        return self._vehicle
+
+    @vehicle.setter
+    def vehicle(self, vehicle: str):
+        """Sets the vehicle of this TechnicalData.
+
+
+        :param vehicle: The vehicle of this TechnicalData.
+        :type vehicle: str
+        """
+
+        self._vehicle = vehicle
 
     @property
     def user(self) -> str:

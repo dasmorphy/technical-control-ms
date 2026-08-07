@@ -1307,3 +1307,42 @@ ALTER SEQUENCE technical.tech_staff_record_id_seq
 
 ALTER TABLE IF EXISTS technical.tech_staff_record
     ALTER COLUMN id_staff_record SET DEFAULT nextval('technical.tech_staff_record_id_seq'::regclass);
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.history_status_project
+(
+    id_history integer NOT NULL,
+    tech_task_id integer,
+    commentary text,
+    created_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    CONSTRAINT history_status_task_pkey PRIMARY KEY (id_history),
+    CONSTRAINT history_task_fkey FOREIGN KEY (tech_task_id)
+        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.history_status_project
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.history_status_project_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.history_status_project_id_seq
+    OWNED BY technical.history_status_project.id_history;
+
+ALTER SEQUENCE technical.history_status_project_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.history_status_project
+    ALTER COLUMN id_history SET DEFAULT nextval('technical.history_status_project_id_seq'::regclass);

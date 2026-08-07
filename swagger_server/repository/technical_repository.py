@@ -15,6 +15,7 @@ from swagger_server.models.db.auditing_sections import AuditingSections
 from swagger_server.models.db.auditing_signatures_img import AuditingSignaturesImg
 from swagger_server.models.db.client import Client
 from swagger_server.models.db.client_projects import ClientProject
+from swagger_server.models.db.history_status_project import HistoryStatusProject
 from swagger_server.models.db.level_gasoline import LevelGasoline
 from swagger_server.models.db.location import ClientLocation
 from swagger_server.models.db.material_technical_record import MaterialTechnicalRecord
@@ -43,6 +44,7 @@ from werkzeug.utils import secure_filename
 from uuid import uuid4
 import getpass
 
+from swagger_server.service.notification_client import NotificationClient
 from swagger_server.utils.utils import calculate_score_percentage
 
 
@@ -50,6 +52,7 @@ class TechnicalRepository:
     
     def __init__(self):
         self.db = PostgreSQLClient("POSTGRESQL")
+        self.notification_client = NotificationClient()
 
 
 
@@ -345,6 +348,7 @@ class TechnicalRepository:
                     location_id=data.get('location_id'),
                     resume=data.get('resume'),
                     created_by=data.get('user'),
+                    vehicle=data.get('vehicle'),
                     updated_by=data.get('user'),
                 )
 
@@ -1074,7 +1078,39 @@ class TechnicalRepository:
                 project.updated_by = body["user"]
                 project.updated_at = datetime.now()
 
+                if body.get("commentary"):
+                    history_entry = HistoryStatusProject(
+                        tech_task_id=id_task,
+                        commentary=body["commentary"],
+                        created_by=body["user"]
+                    )
+
+                    session.add(history_entry)
+                    session.flush()
+
                 session.commit()
+
+                try:
+                    data_notification = {
+                        "channel": "ZENTINEL",
+                        "data": {
+                            "data": {
+                                "history_id": history_entry.id_history if body.get("commentary") else None
+                            },
+                            "notification_type": "TECHNICAL_REQUEST_APPROVAL",
+                            "user_ids": [
+                                "bce2f555-e458-4022-9a69-968e5dddf6bd"
+                            ],
+                            "variables": {
+                                "username": body["user"],
+                                "project_name": project.name
+                            }
+                        },
+                        "externalTransactionId": external
+                    }
+                    self.notification_client.send_notification(data_notification)
+                except Exception as e:
+                    logger.error("Error enviando notificación: {}", str(e), internal=internal, external=external)
 
             except Exception as exception:
                 session.rollback()
@@ -1101,6 +1137,41 @@ class TechnicalRepository:
                         "updated_by": record.updated_by,
                         "created_at": record.created_at,
                         "updated_at": record.updated_at
+                    }
+                    for record in rows
+                ]
+
+                return data
+            
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+    def get_history_project(self, filters, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = (
+                    select(HistoryStatusProject)
+                    .order_by(HistoryStatusProject.created_at.desc())
+                )
+
+                if filters.get("id_history"):
+                    query_stmt = query_stmt.where(
+                        HistoryStatusProject.tech_task_id == filters["id_history"]
+                    )
+
+                rows = session.execute(query_stmt).scalars().all()
+
+                data = [
+                    {
+                        "id_history": record.id_history,
+                        "tech_task_id": record.tech_task_id,
+                        "commentary": record.commentary,
+                        "created_by": record.created_by,
+                        "created_at": record.created_at
                     }
                     for record in rows
                 ]

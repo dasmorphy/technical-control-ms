@@ -38,6 +38,7 @@ class TechnicalRecord(Base):
     )
 
     resume = Column(Text)
+    vehicle = Column(Text)
 
     created_by = Column(Text)
     updated_by = Column(Text)

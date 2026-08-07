@@ -139,3 +139,10 @@ class TechnicalUseCase:
 
     def get_technical_staff(self, internal, external):
         return self.technical_control_repository.get_technical_staff(internal, external)
+
+    def get_history_project(self, params, internal, external):        
+        filters = {
+            "id_history": params.get("id_history")
+        }
+
+        return self.technical_control_repository.get_history_project(filters, internal, external)

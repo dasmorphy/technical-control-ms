@@ -25,7 +25,8 @@ def access():
         },
         "PASSWORDS": {
             "ENCRYPTION": os.getenv('ENCRYPTION').strip("'")
-        }
+        },
+        "API_NOTIFICATION": os.getenv('API_NOTIFICATION')
     }
 
 def access_mode():
