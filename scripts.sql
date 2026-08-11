@@ -617,7 +617,8 @@ CREATE TABLE technical.task_technical
     name text,
     description text,
     code text,
-    status text;
+    status text,
+    requested_by text,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     created_by text,
@@ -1316,6 +1317,8 @@ CREATE TABLE technical.history_status_project
     id_history integer NOT NULL,
     tech_task_id integer,
     commentary text,
+    previous_status text,
+    status text,
     created_at timestamp without time zone DEFAULT now(),
     created_by text,
     CONSTRAINT history_status_task_pkey PRIMARY KEY (id_history),

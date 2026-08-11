@@ -358,6 +358,10 @@ paths:
                       type: string
                       nullable: true
                       example: "N/A"
+                    notification_type:
+                      type: string
+                      nullable: true
+                      example: "TECHNICAL_APPROVAL_REQUEST_REJECTED"
                     user:
                       type: string
                       example: "dmales"
@@ -408,6 +412,12 @@ paths:
       operationId: get_history_project
       parameters:
         - name: id_history
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: task_id
           in: query
           required: false
           schema:

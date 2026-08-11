@@ -33,6 +33,7 @@ from swagger_server.models.db.tech_staff_record import TechStaffRecord
 from swagger_server.models.db.technical_equipment import TechnicalEquipment
 from swagger_server.models.db.technical_record import TechnicalRecord
 from swagger_server.models.db.technical_staff import TechnicalStaff
+from swagger_server.models.db.users import Users
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
@@ -640,7 +641,7 @@ class TechnicalRepository:
                         "client": client.name,
                         "client_id": client.id_client,
                         "description": task.description,
-                        "locaton_id": location.id_location if location else None,
+                        "location_id": location.id_location if location else None,
                         "location": location.name if location else None,
                         "code": task.code,
                         "status": task.status,
@@ -1062,6 +1063,9 @@ class TechnicalRepository:
     def update_status_project(self, id_task: int, body, internal: str, external: str) -> None:
         with self.db.session_factory() as session:
             try:
+                users_id_send = []
+                notyfication_type = body.get("notification_type")
+
                 project = session.execute(
                     select(TaskTechnical)
                     .where(TaskTechnical.id_task == id_task)
@@ -1074,19 +1078,32 @@ class TechnicalRepository:
                         status_code=404
                     )
 
+                history_entry = HistoryStatusProject(
+                    tech_task_id=id_task,
+                    status=body["new_status"],
+                    previous_status=project.status,
+                    commentary=body.get("commentary"),
+                    created_by=body["user"]
+                )
+                
                 project.status = body["new_status"]
                 project.updated_by = body["user"]
                 project.updated_at = datetime.now()
 
-                if body.get("commentary"):
-                    history_entry = HistoryStatusProject(
-                        tech_task_id=id_task,
-                        commentary=body["commentary"],
-                        created_by=body["user"]
+                if notyfication_type == "TECHNICAL_REQUEST_APPROVAL":
+                    user_id = session.scalar(
+                        select(Users.id_user).where(
+                            Users.user == body["user"]
+                        )
                     )
+                    project.requested_by = str(user_id) if user_id else None
+                    users_id_send.append("bce2f555-e458-4022-9a69-968e5dddf6bd") #jefe_tecnico
 
-                    session.add(history_entry)
-                    session.flush()
+                elif notyfication_type == "TECHNICAL_APPROVAL_REQUEST_REJECTED" or notyfication_type == "TECHNICAL_APPROVAL_REQUEST_APPROVED":
+                    users_id_send.append(project.requested_by)
+
+                session.add(history_entry)
+                session.flush()
 
                 session.commit()
 
@@ -1095,12 +1112,10 @@ class TechnicalRepository:
                         "channel": "ZENTINEL",
                         "data": {
                             "data": {
-                                "history_id": history_entry.id_history if body.get("commentary") else None
+                                "history_id": history_entry.id_history
                             },
-                            "notification_type": "TECHNICAL_REQUEST_APPROVAL",
-                            "user_ids": [
-                                "bce2f555-e458-4022-9a69-968e5dddf6bd"
-                            ],
+                            "notification_type": notyfication_type,
+                            "user_ids": users_id_send,
                             "variables": {
                                 "username": body["user"],
                                 "project_name": project.name
@@ -1153,34 +1168,137 @@ class TechnicalRepository:
     def get_history_project(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
+
+                tech_record_subq = (
+                    select(
+                        TechnicalRecord.task_id.label("task_id"),
+                        func.json_agg(
+                            func.json_build_object(
+                                "id_record", TechnicalRecord.id_record,
+                                "client_id", TechnicalRecord.client_id,
+                                "location_id", TechnicalRecord.location_id,
+                                "resume", TechnicalRecord.resume,
+                                "created_by", TechnicalRecord.created_by,
+                                "created_at", TechnicalRecord.created_at,
+                            )
+                        ).label("record_technical")
+                    )
+                    .group_by(TechnicalRecord.task_id)
+                    .subquery()
+                )
+
                 query_stmt = (
-                    select(HistoryStatusProject)
-                    .order_by(HistoryStatusProject.created_at.desc())
+                    select(
+                        HistoryStatusProject,
+                        TaskTechnical,
+                        ClientLocation,
+                        Client,
+                        tech_record_subq.c.record_technical
+                    )
+                    .join(
+                        TaskTechnical,
+                        TaskTechnical.id_task
+                        == HistoryStatusProject.tech_task_id
+                    )
+                    .outerjoin(
+                        TaskLocation,
+                        TaskLocation.task_id
+                        == TaskTechnical.id_task
+                    )
+                    .outerjoin(
+                        ClientLocation,
+                        ClientLocation.id_location
+                        == TaskLocation.location_id
+                    )
+                    .outerjoin(
+                        Client,
+                        Client.id_client
+                        == ClientLocation.client_id
+                    )
+                    .outerjoin(
+                        tech_record_subq,
+                        tech_record_subq.c.task_id
+                        == TaskTechnical.id_task
+                    )
+                    .order_by(
+                        HistoryStatusProject.created_at.desc()
+                    )
                 )
 
                 if filters.get("id_history"):
                     query_stmt = query_stmt.where(
-                        HistoryStatusProject.tech_task_id == filters["id_history"]
+                        HistoryStatusProject.id_history
+                        == filters["id_history"]
                     )
 
-                rows = session.execute(query_stmt).scalars().all()
+                if filters.get("task_id"):
+                    query_stmt = query_stmt.where(
+                        HistoryStatusProject.tech_task_id
+                        == filters["task_id"]
+                    )
+
+                rows = session.execute(query_stmt).all()
 
                 data = [
                     {
-                        "id_history": record.id_history,
-                        "tech_task_id": record.tech_task_id,
-                        "commentary": record.commentary,
-                        "created_by": record.created_by,
-                        "created_at": record.created_at
+                        "id_history": history.id_history,
+                        "tech_task_id": history.tech_task_id,
+                        "commentary": history.commentary,
+                        "status": history.status,
+                        "previous_status": history.previous_status,
+                        "created_by": history.created_by,
+                        "created_at": history.created_at,
+
+                        "task": {
+                            "id_task": task.id_task,
+                            "name": task.name,
+                            "client": client.name if client else None,
+                            "client_id": client.id_client if client else None,
+                            "description": task.description,
+                            "location_id": (
+                                location.id_location
+                                if location else None
+                            ),
+                            "location": (
+                                location.name
+                                if location else None
+                            ),
+                            "code": task.code,
+                            "status": task.status,
+                            "record_technical": (
+                                record_technical
+                                if record_technical
+                                else None
+                            ),
+                            "created_by": task.created_by,
+                            "updated_by": task.updated_by,
+                            "created_at": task.created_at,
+                            "updated_at": task.updated_at,
+                        }
                     }
-                    for record in rows
+                    for (
+                        history,
+                        task,
+                        location,
+                        client,
+                        record_technical
+                    ) in rows
                 ]
 
                 return data
-            
+
             except Exception as exception:
-                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                logger.error(
+                    'Error: {}',
+                    str(exception),
+                    internal=internal,
+                    external=external
+                )
+
                 if isinstance(exception, CustomAPIException):
                     raise exception
-                
-                raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+                raise CustomAPIException(
+                    "Error al obtener en la base de datos",
+                    500
+                )

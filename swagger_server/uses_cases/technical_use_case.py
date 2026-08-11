@@ -142,7 +142,8 @@ class TechnicalUseCase:
 
     def get_history_project(self, params, internal, external):        
         filters = {
-            "id_history": params.get("id_history")
+            "id_history": params.get("id_history"),
+            "task_id": params.get("task_id")
         }
 
         return self.technical_control_repository.get_history_project(filters, internal, external)

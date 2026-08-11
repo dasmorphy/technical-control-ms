@@ -29,6 +29,9 @@ class HistoryStatusProject(Base):
 
     commentary = Column(Text)
 
+    previous_status = Column(Text)
+    status = Column(Text)
+
     created_by = Column(Text)
 
     created_at = Column(

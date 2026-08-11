@@ -26,6 +26,7 @@ class TaskTechnical(Base):
     description = Column(Text)
     code = Column(Text)
     status = Column(Text)
+    requested_by = Column(Text)
     
 
     created_by = Column(Text)
