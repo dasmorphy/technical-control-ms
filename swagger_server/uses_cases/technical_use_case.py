@@ -85,10 +85,13 @@ class TechnicalUseCase:
     def get_task(self, params, internal, external):
         locations = params.get("locations")
         clients = params.get("clients")
+        clients = params.get("clients")
+        status = params.get("status")
 
         filters = {
             "locations": [int(x) for x in locations.split(",")] if locations else [],
             "clients": [int(x) for x in clients.split(",")] if clients else [],
+            "status": [x for x in status.split(",")] if status else [],
         }
 
         return self.technical_control_repository.get_task(filters, internal, external)
@@ -150,8 +153,41 @@ class TechnicalUseCase:
 
     def resume_graphs(self, params, internal, external):
         filters = {
-            "id_history": params.get("id_history"),
-            "task_id": params.get("task_id")
+            "start_date": params.get("start_date"),
+            "end_date": params.get("end_date"),
+            "user": params.get("user")
         }
 
-        return self.technical_control_repository.get_history_project(filters, internal, external)
+        count_status = self.technical_control_repository.get_task_technical_count_by_status(filters, external, internal)
+        auditing_percentaje = self.get_auditing_percentaje(filters, internal, external)
+
+        return {
+            "count_status": count_status,
+            "auditing_percentaje": auditing_percentaje
+        }
+
+    def get_auditing_percentaje(self, filters, internal, external):
+        result = self.technical_control_repository.get_task_technical_audit_percentage(filters, internal, external)
+        total = result.total
+        audited = result.audited
+        not_audited = total - audited
+
+        audited_percentage = (
+            (audited / total) * 100
+            if total > 0
+            else 0
+        )
+
+        not_audited_percentage = (
+            (not_audited / total) * 100
+            if total > 0
+            else 0
+        )
+
+        return {
+            "total": total,
+            "audited": audited,
+            "not_audited": not_audited,
+            "audited_percentage": round(audited_percentage, 2),
+            "not_audited_percentage": round(not_audited_percentage, 2)
+        }

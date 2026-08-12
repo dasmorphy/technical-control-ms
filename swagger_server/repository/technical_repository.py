@@ -39,7 +39,7 @@ from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import ARRAY, JSON, Text, cast, distinct, exists, func, select, text, update
+from sqlalchemy import ARRAY, JSON, Text, and_, case, cast, distinct, exists, func, select, text, update
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -631,6 +631,11 @@ class TechnicalRepository:
                         ClientLocation.client_id.in_(filters["clients"])
                     )
 
+                
+                if filters.get("status"):
+                    query_stmt = query_stmt.where(
+                        TaskTechnical.status.in_(filters["status"])
+                    )
 
                 rows = session.execute(query_stmt).all()
 
@@ -639,6 +644,7 @@ class TechnicalRepository:
                         "id_task": task.id_task,
                         "name": task.name,
                         "client": client.name,
+                        "requested_by": task.requested_by,
                         "client_id": client.id_client,
                         "description": task.description,
                         "location_id": location.id_location if location else None,
@@ -1288,17 +1294,110 @@ class TechnicalRepository:
                 return data
 
             except Exception as exception:
-                logger.error(
-                    'Error: {}',
-                    str(exception),
-                    internal=internal,
-                    external=external
-                )
+                logger.error('Error: {}',str(exception),internal=internal,external=external)
 
                 if isinstance(exception, CustomAPIException):
                     raise exception
 
-                raise CustomAPIException(
-                    "Error al obtener en la base de datos",
-                    500
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+            
+
+    def get_task_technical_count_by_status(self, filtersBase, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                stmt = (
+                    select(
+                        TaskTechnical.status.label("status"),
+                        func.count(TaskTechnical.id_task).label("count")
+                    )
+                    .select_from(TaskTechnical)
                 )
+
+                if filtersBase.get("user"):
+                    stmt = stmt.where(
+                        TaskTechnical.created_by == filtersBase.get("user")
+                    )
+
+                if filtersBase.get("start_date"):
+                    stmt = stmt.where(
+                        TaskTechnical.created_at >= filtersBase.get("start_date")
+                    )
+
+                if filtersBase.get("end_date"):
+                    stmt = stmt.where(
+                        TaskTechnical.created_at <= filtersBase.get("end_date")
+                    )
+
+                stmt = (
+                    stmt
+                    .group_by(TaskTechnical.status)
+                    .order_by(TaskTechnical.status)
+                )
+
+                result = session.execute(stmt).all()
+
+                task_count_by_status = [
+                    {
+                        "status": row.status,
+                        "count": row.count
+                    }
+                    for row in result
+                ]
+
+                return task_count_by_status
+
+            except Exception as exception:
+                logger.error('Error: {}',str(exception),internal=internal,external=external)
+
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al obtener el resumen de tareas técnicas por status en la base de datos", 500)
+
+
+    def get_task_technical_audit_percentage(self, filtersBase, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                # Subconsulta: determina si la tarea tiene al menos una auditoría
+                audited_exists = (
+                    select(Auditing.id_auditing)
+                    .where(
+                        Auditing.task_id == TaskTechnical.id_task
+                    )
+                    .exists()
+                )
+
+                stmt = (
+                    select(
+                        func.count(TaskTechnical.id_task).label("total"),
+                        func.count(
+                            case(
+                                (audited_exists, 1)
+                            )
+                        ).label("audited")
+                    )
+                    .select_from(TaskTechnical)
+                )
+
+                if filtersBase.get("user"):
+                    stmt = stmt.where(
+                        TaskTechnical.created_by == filtersBase.get("user")
+                    )
+
+                if filtersBase.get("start_date"):
+                    stmt = stmt.where(
+                        TaskTechnical.created_at >= filtersBase.get("start_date")
+                    )
+
+                if filtersBase.get("end_date"):
+                    stmt = stmt.where(
+                        TaskTechnical.created_at <= filtersBase.get("end_date")
+                    )
+
+                return session.execute(stmt).one()
+
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                raise CustomAPIException("Error al obtener el porcentaje de tareas técnicas auditadas", 500)

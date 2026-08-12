@@ -680,7 +680,7 @@ class TechnicalView(MethodView):
                 message = f"start request: {function_name}, channel: {request.headers.get('channel')}"
                 logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
                 headers = {k.lower(): v for k, v in request.headers.items()}
-                result = self.technical_use_case.resume_graphs(headers, request.args, internal_transaction_id, external_transaction_id)
+                result = self.technical_use_case.resume_graphs(request.args, internal_transaction_id, external_transaction_id)
                 response["error_code"] = 0
                 response["message"] = "Datos obtenidos correctamente"
                 response["data"] = result

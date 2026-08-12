@@ -228,6 +228,16 @@ paths:
       description: Devuelve todos los proyectos de la base
       operationId: get_project
       parameters:
+        - name: status
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+          example: ["Pendiente ejecución"]
         - name: locations
           in: query
           required: false
@@ -571,7 +581,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
-  /resume_graphs:
+  /resume-graphs:
     get:
       tags:
       - Reports
