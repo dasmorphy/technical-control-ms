@@ -147,3 +147,11 @@ class TechnicalUseCase:
         }
 
         return self.technical_control_repository.get_history_project(filters, internal, external)
+
+    def resume_graphs(self, params, internal, external):
+        filters = {
+            "id_history": params.get("id_history"),
+            "task_id": params.get("task_id")
+        }
+
+        return self.technical_control_repository.get_history_project(filters, internal, external)
