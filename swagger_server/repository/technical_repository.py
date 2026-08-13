@@ -39,7 +39,7 @@ from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import ARRAY, JSON, Text, and_, case, cast, distinct, exists, func, select, text, update
+from sqlalchemy import ARRAY, JSON, String, Text, and_, case, cast, distinct, exists, func, select, text, update
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -621,7 +621,8 @@ class TechnicalRepository:
                         TaskTechnical,
                         ClientLocation,
                         Client,
-                        tech_record_subq.c.record_technical
+                        tech_record_subq.c.record_technical,
+                        Users.user
                     )
                     .outerjoin(
                         TaskLocation,
@@ -638,6 +639,10 @@ class TechnicalRepository:
                     .outerjoin(
                         tech_record_subq,
                         tech_record_subq.c.task_id == TaskTechnical.id_task
+                    )
+                    .outerjoin(
+                        Users,
+                        cast(Users.id_user, String) == TaskTechnical.requested_by
                     )
                     .order_by(TaskTechnical.created_at.desc())
                 )
@@ -665,7 +670,7 @@ class TechnicalRepository:
                         "id_task": task.id_task,
                         "name": task.name,
                         "client": client.name,
-                        "requested_by": task.requested_by,
+                        "requested_by": user,
                         "client_id": client.id_client,
                         "description": task.description,
                         "location_id": location.id_location if location else None,
@@ -678,7 +683,7 @@ class TechnicalRepository:
                         "created_at": task.created_at,
                         "updated_at": task.updated_at
                     }
-                    for task, location, client, record_technical in rows
+                    for task, location, client, record_technical, user in rows
                 ]
 
                 return data
