@@ -576,6 +576,19 @@ class TechnicalRepository:
     def get_task(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
+                images_subq = (
+                    select(
+                        TechRecordImage.record_id.label("record_id"),
+                        func.array_agg(
+                            TechRecordImage.image_path
+                        )
+                        .filter(TechRecordImage.image_path.isnot(None))
+                        .label("images")
+                    )
+                    .group_by(TechRecordImage.record_id)
+                    .subquery()
+                )
+                
                 tech_record_subq = (
                     select(
                         TechnicalRecord.task_id.label("task_id"),
@@ -587,8 +600,16 @@ class TechnicalRepository:
                                 "resume", TechnicalRecord.resume,
                                 "created_by", TechnicalRecord.created_by,
                                 "created_at", TechnicalRecord.created_at,
+                                "images", func.coalesce(
+                                    images_subq.c.images,
+                                    []
+                                )
                             )
                         ).label("record_technical")
+                    )
+                    .outerjoin(
+                        images_subq,
+                        images_subq.c.record_id == TechnicalRecord.id_record
                     )
                     .group_by(TechnicalRecord.task_id)
                     .subquery()
