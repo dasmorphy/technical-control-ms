@@ -46,6 +46,7 @@ from uuid import uuid4
 import getpass
 
 from swagger_server.service.notification_client import NotificationClient
+from swagger_server.service.rabbitMQ import RabbitMQClient
 from swagger_server.utils.utils import calculate_score_percentage
 
 
@@ -54,6 +55,7 @@ class TechnicalRepository:
     def __init__(self):
         self.db = PostgreSQLClient("POSTGRESQL")
         self.notification_client = NotificationClient()
+        self.rabbitMQ = RabbitMQClient()
 
 
 
@@ -1155,7 +1157,11 @@ class TechnicalRepository:
                         },
                         "externalTransactionId": external
                     }
-                    self.notification_client.send_notification(data_notification)
+                    # self.notification_client.send_notification(data_notification)
+                    self.rabbitMQ.send_event(
+                        routing_key="technical.callbacks.notification",
+                        body=data_notification
+                    )
                 except Exception as e:
                     logger.error("Error enviando notificación: {}", str(e), internal=internal, external=external)
 

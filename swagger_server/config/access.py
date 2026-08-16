@@ -26,7 +26,14 @@ def access():
         "PASSWORDS": {
             "ENCRYPTION": os.getenv('ENCRYPTION').strip("'")
         },
-        "API_NOTIFICATION": os.getenv('API_NOTIFICATION')
+        "API_NOTIFICATION": os.getenv('API_NOTIFICATION'),
+        "RABBITMQ": {
+            "HOST": os.getenv('RABBITMQ_HOST'),
+            "PORT": os.getenv('RABBIT_PORT'),
+            "VHOST": os.getenv('RABBIT_VHOST'),
+            "USER": os.getenv('RABBIT_USER'),
+            "PASS": os.getenv('RABBITMQ_PASS')
+        }
     }
 
 def access_mode():
