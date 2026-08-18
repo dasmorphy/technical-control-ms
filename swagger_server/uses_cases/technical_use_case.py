@@ -113,6 +113,7 @@ class TechnicalUseCase:
             "locations": [int(x) for x in locations.split(",")] if locations else [],
             "clients": [int(x) for x in clients.split(",")] if clients else [],
             "tasks": [int(x) for x in tasks.split(",")] if tasks else [],
+            "user": params.get("user"),
         }
 
         return self.technical_control_repository.get_tech_record(filters, internal, external)

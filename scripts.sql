@@ -944,6 +944,7 @@ CREATE TABLE IF NOT EXISTS technical.technical_record
     updated_by text COLLATE pg_catalog."default",
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
+    status text,
     client_id integer,
     location_id integer,
     CONSTRAINT technical_record_pkey PRIMARY KEY (id_record),

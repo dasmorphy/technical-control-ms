@@ -989,6 +989,12 @@ paths:
             items:
               type: integer
           example: [1,2,3]
+        - name: user
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "dmales"
         - name: externalTransactionId
           in: header
           required: true
@@ -1283,6 +1289,7 @@ components:
       type: object
       properties:
         materials:
+          nullable: true
           type: array
           items:
             $ref: "#/components/schemas/MaterialsData"
@@ -1296,20 +1303,27 @@ components:
           type: integer
           example: 1
         technical_staff:
+          nullable: true
           type: array
           items:
             type: number
           example: [1,2,3]
+        status:
+          type: string
+          example: "Incompleto"
         resume:
+          nullable: true
           type: string
           example: "1"
         vehicle:
+          nullable: true
           type: string
           example: "GME-511"
         user:
           type: string
           example: "dmales"
         images:
+          nullable: true
           maxItems: 10
           type: array
           items:

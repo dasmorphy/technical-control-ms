@@ -346,6 +346,7 @@ class TechnicalRepository:
                     )
 
                 technical_record = TechnicalRecord(
+                    status=data.get('status'),
                     task_id=data.get('task_id'),
                     client_id=data.get('client_id'),
                     location_id=data.get('location_id'),
@@ -747,12 +748,56 @@ class TechnicalRepository:
     def get_tech_record(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
+                # ============================
+                # MATERIALES
+                # ============================
+                materials_subq = (
+                    select(
+                        MaterialTechnicalRecord.record_id.label("record_id"),
+                        func.json_agg(
+                            func.json_build_object(
+                                "id_material_record", MaterialTechnicalRecord.id_material_record,
+                                "material", MaterialTechnicalRecord.material,
+                                "quantity", MaterialTechnicalRecord.quantity,
+                            )
+                        ).label("materials")
+                    )
+                    .group_by(MaterialTechnicalRecord.record_id)
+                    .subquery()
+                )
+
+                # ============================
+                # PERSONAL TÉCNICO
+                # ============================
+                staff_subq = (
+                    select(
+                        TechStaffRecord.record_id.label("record_id"),
+                        func.json_agg(
+                            func.json_build_object(
+                                "id_technical", TechnicalStaff.id_technical,
+                                "name", TechnicalStaff.name,
+                            )
+                        ).label("technical_staff")
+                    )
+                    .join(
+                        TechnicalStaff,
+                        TechnicalStaff.id_technical == TechStaffRecord.tech_staff_id
+                    )
+                    .group_by(TechStaffRecord.record_id)
+                    .subquery()
+                )
+
+                # ============================
+                # CONSULTA PRINCIPAL
+                # ============================
                 query_stmt = (
                     select(
                         TechnicalRecord,
                         TaskTechnical,
                         Client,
-                        ClientLocation
+                        ClientLocation,
+                        materials_subq.c.materials,
+                        staff_subq.c.technical_staff,
                     )
                     .outerjoin(
                         TaskTechnical,
@@ -766,9 +811,22 @@ class TechnicalRepository:
                         Client,
                         Client.id_client == TechnicalRecord.client_id
                     )
-                    .order_by(TechnicalRecord.created_at.desc())
+                    .outerjoin(
+                        materials_subq,
+                        materials_subq.c.record_id == TechnicalRecord.id_record
+                    )
+                    .outerjoin(
+                        staff_subq,
+                        staff_subq.c.record_id == TechnicalRecord.id_record
+                    )
+                    .order_by(
+                        TechnicalRecord.created_at.desc()
+                    )
                 )
 
+                # ============================
+                # FILTROS
+                # ============================
                 if filters.get("locations"):
                     query_stmt = query_stmt.where(
                         ClientLocation.id_location.in_(filters["locations"])
@@ -779,6 +837,11 @@ class TechnicalRepository:
                         ClientLocation.client_id.in_(filters["clients"])
                     )
 
+                if filters.get("user"):
+                    query_stmt = query_stmt.where(
+                        TechnicalRecord.created_by == filters["user"]
+                    )
+
                 if filters.get("tasks"):
                     query_stmt = query_stmt.where(
                         TaskTechnical.id_task.in_(filters["tasks"])
@@ -786,19 +849,36 @@ class TechnicalRepository:
 
                 rows = session.execute(query_stmt).all()
 
+                # ============================
+                # RESPONSE
+                # ============================
                 data = [
                     {
                         "id_record": record.id_record,
                         "resume": record.resume,
-                        "client_name": client.name,
+                        "status": record.status,
+                        "vehicle": record.vehicle,
+
+                        "client_name": client.name if client else None,
                         "location_name": location.name if location else None,
                         "task_code": task.code if task else None,
+
+                        "materials": materials or [],
+                        "technical_staff": technical_staff or [],
+
                         "created_by": record.created_by,
                         "updated_by": record.updated_by,
                         "created_at": record.created_at,
-                        "updated_at": record.updated_at
+                        "updated_at": record.updated_at,
                     }
-                    for record, task, client, location in rows
+                    for (
+                        record,
+                        task,
+                        client,
+                        location,
+                        materials,
+                        technical_staff
+                    ) in rows
                 ]
 
                 return data
