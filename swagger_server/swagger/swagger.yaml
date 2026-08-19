@@ -1332,6 +1332,9 @@ components:
     MaterialsData:
       type: object
       properties:
+        id_equipment:
+          type: integer
+          example: 1
         quantity:
           type: integer
           example: 1

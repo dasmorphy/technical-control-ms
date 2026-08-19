@@ -1350,3 +1350,18 @@ ALTER SEQUENCE technical.history_status_project_id_seq
 
 ALTER TABLE IF EXISTS technical.history_status_project
     ALTER COLUMN id_history SET DEFAULT nextval('technical.history_status_project_id_seq'::regclass);
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS technical.material_technical_record DROP COLUMN IF EXISTS material;
+
+ALTER TABLE IF EXISTS technical.material_technical_record
+    ADD COLUMN equipment_id integer;
+ALTER TABLE IF EXISTS technical.material_technical_record
+    ADD CONSTRAINT equipment_id_fkey FOREIGN KEY (equipment_id)
+    REFERENCES technical.technical_equipment (id_equipment) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS fki_equipment_id_fkey
+    ON technical.material_technical_record(equipment_id);

@@ -365,6 +365,7 @@ class TechnicalRepository:
                     material_tech = MaterialTechnicalRecord(
                         record_id=record_technical_id,
                         quantity=material.get('quantity'),
+                        equipment_id=material.get('id_equipment'),
                         material=material.get('material')
                     )
                     session.add(material_tech)
@@ -748,6 +749,18 @@ class TechnicalRepository:
     def get_tech_record(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
+                images_subq = (
+                    select(
+                        TechRecordImage.record_id.label("record_id"),
+                        func.array_agg(
+                            TechRecordImage.image_path
+                        )
+                        .filter(TechRecordImage.image_path.isnot(None))
+                        .label("images")
+                    )
+                    .group_by(TechRecordImage.record_id)
+                    .subquery()
+                )
                 # ============================
                 # MATERIALES
                 # ============================
@@ -757,10 +770,15 @@ class TechnicalRepository:
                         func.json_agg(
                             func.json_build_object(
                                 "id_material_record", MaterialTechnicalRecord.id_material_record,
-                                "material", MaterialTechnicalRecord.material,
+                                "id_equipment", TechnicalEquipment.id_equipment,
+                                "material", TechnicalEquipment.product,
                                 "quantity", MaterialTechnicalRecord.quantity,
                             )
                         ).label("materials")
+                    )
+                    .outerjoin(
+                        TechnicalEquipment,
+                        TechnicalEquipment.id_equipment == MaterialTechnicalRecord.equipment_id
                     )
                     .group_by(MaterialTechnicalRecord.record_id)
                     .subquery()
@@ -798,6 +816,10 @@ class TechnicalRepository:
                         ClientLocation,
                         materials_subq.c.materials,
                         staff_subq.c.technical_staff,
+                        func.coalesce(
+                            images_subq.c.images,
+                            []
+                        ).label("images")
                     )
                     .outerjoin(
                         TaskTechnical,
@@ -818,6 +840,10 @@ class TechnicalRepository:
                     .outerjoin(
                         staff_subq,
                         staff_subq.c.record_id == TechnicalRecord.id_record
+                    )
+                    .outerjoin(
+                        images_subq,
+                        images_subq.c.record_id == TechnicalRecord.id_record
                     )
                     .order_by(
                         TechnicalRecord.created_at.desc()
@@ -873,6 +899,7 @@ class TechnicalRepository:
                         "updated_by": record.updated_by,
                         "created_at": record.created_at,
                         "updated_at": record.updated_at,
+                        "images": images or []
                     }
                     for (
                         record,
@@ -880,7 +907,8 @@ class TechnicalRepository:
                         client,
                         location,
                         materials,
-                        technical_staff
+                        technical_staff,
+                        images
                     ) in rows
                 ]
 

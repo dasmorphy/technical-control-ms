@@ -27,8 +27,14 @@ class MaterialTechnicalRecord(Base):
         ForeignKey("technical.technical_record.id_record")
     )
 
-    quantity = Column(Integer)
+    equipment_id = Column(
+        Integer,
+        ForeignKey("technical.technical_equipment.id_equipment")
+    )
+
     material = Column(Text)
+
+    quantity = Column(Integer)
 
     created_at = Column(
         DateTime,
