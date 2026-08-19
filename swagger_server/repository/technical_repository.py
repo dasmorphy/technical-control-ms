@@ -860,8 +860,11 @@ class TechnicalRepository:
                         "vehicle": record.vehicle,
 
                         "client_name": client.name if client else None,
+                        "client_id": client.id_client if client else None,
+                        "location_id": location.id_location if location else None,
                         "location_name": location.name if location else None,
                         "task_code": task.code if task else None,
+                        "task_id": task.id_task if task else None,
 
                         "materials": materials or [],
                         "technical_staff": technical_staff or [],
