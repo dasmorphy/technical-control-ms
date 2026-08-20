@@ -114,6 +114,7 @@ class TechnicalUseCase:
             "clients": [int(x) for x in clients.split(",")] if clients else [],
             "tasks": [int(x) for x in tasks.split(",")] if tasks else [],
             "user": params.get("user"),
+            "id_tech_record": [int(params.get("id-record"))] if params.get("id-record") else []
         }
 
         return self.technical_control_repository.get_tech_record(filters, internal, external)

@@ -22,3 +22,6 @@ pytz==2023.3
 pika==1.4.4
 psycopg2-binary==2.9.7
 Werkzeug==2.2.3
+reportlab==4.2.5
+Pillow==10.4.0
+chardet==5.2.0

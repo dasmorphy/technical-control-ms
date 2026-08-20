@@ -873,6 +873,11 @@ class TechnicalRepository:
                         TaskTechnical.id_task.in_(filters["tasks"])
                     )
 
+                if filters.get("id_tech_record"):
+                    query_stmt = query_stmt.where(
+                        TechnicalRecord.id_record.in_(filters["id_tech_record"])
+                    )
+
                 rows = session.execute(query_stmt).all()
 
                 # ============================
@@ -891,6 +896,7 @@ class TechnicalRepository:
                         "location_name": location.name if location else None,
                         "task_code": task.code if task else None,
                         "task_id": task.id_task if task else None,
+                        "name_project": task.name if task else None,
 
                         "materials": materials or [],
                         "technical_staff": technical_staff or [],

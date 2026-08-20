@@ -989,6 +989,13 @@ paths:
             items:
               type: integer
           example: [1,2,3]
+        - name: id-record
+          in: query
+          required: false
+          schema:
+            type: integer
+            example: 1
+          example: [1,2,3]
         - name: user
           in: query
           required: false
@@ -1082,6 +1089,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /technical_record/pdf:
+    get:
+      tags:
+      - Reports
+      summary: Genera el informe PDF de un registro técnico
+      description: Genera un PDF con los datos, materiales e imágenes del registro técnico.
+      operationId: get_tech_record_pdf
+      parameters:
+        - name: id-record
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          example: 1
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: Informe PDF generado correctamente
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Identificador inválido
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Registro técnico no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Error interno
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "502":
+          description: No fue posible descargar una imagen del registro
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
   /auditing:
     get:
       tags:
@@ -1099,7 +1166,7 @@ paths:
             type: array
             items:
               type: integer
-          example: [1,2,3]
+          example: 1
         - name: clients
           in: query
           required: false

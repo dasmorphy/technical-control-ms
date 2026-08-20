@@ -15,6 +15,7 @@ from loguru import logger
 import json
 
 from swagger_server.repository.technical_repository import TechnicalRepository
+from swagger_server.service.technical_report_pdf import ImageDownloadError, TechnicalReportPdf
 from swagger_server.uses_cases.technical_use_case import TechnicalUseCase
 from swagger_server.utils.transactions.transaction import generate_internal_transaction_id
 
@@ -692,3 +693,36 @@ class TechnicalView(MethodView):
             response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
             
         return response, status_code
+
+    def get_tech_record_pdf(self):
+        internal_process = (None, None)
+        function_name = "get_tech_record_pdf"
+        try:
+            internal_transaction_id = str(generate_internal_transaction_id())
+            external_transaction_id = request.headers.get("externalTransactionId")
+            internal_process = (internal_transaction_id, external_transaction_id)
+            id_record = request.args.get("id-record")
+
+            results = self.technical_use_case.get_tech_record(
+                {"id-record": id_record},
+                internal_transaction_id,
+                external_transaction_id,
+            )
+            if not results:
+                raise CustomAPIException("Registro técnico no encontrado", 404)
+
+            pdf = TechnicalReportPdf.build(results[0])
+            return send_file(
+                pdf,
+                mimetype="application/pdf",
+                as_attachment=True,
+                download_name=f"informe-tecnico-{id_record}.pdf",
+            )
+        except ImageDownloadError as ex:
+            response, status_code = CustomAPIException.check_exception(
+                CustomAPIException(str(ex), 502), function_name, internal_process
+            )
+            return response, status_code
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            return response, status_code
