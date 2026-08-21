@@ -27,6 +27,7 @@ class TaskTechnical(Base):
     code = Column(Text)
     status = Column(Text)
     requested_by = Column(Text)
+    is_support = Column(Boolean)
     
 
     created_by = Column(Text)

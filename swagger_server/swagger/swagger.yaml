@@ -228,6 +228,12 @@ paths:
       description: Devuelve todos los proyectos de la base
       operationId: get_project
       parameters:
+        - name: support
+          in: query
+          required: false
+          schema:
+            type: boolean
+            example: false
         - name: status
           in: query
           required: false
@@ -1596,6 +1602,10 @@ components:
         description:
           type: string
           example: "N/A"
+        is_support:
+          type: boolean
+          nullable: true
+          example: false
         user:
           type: string
           example: "dmales"

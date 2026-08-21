@@ -619,6 +619,7 @@ CREATE TABLE technical.task_technical
     code text,
     status text,
     requested_by text,
+    is_support boolean DEFAULT False,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     created_by text,

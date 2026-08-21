@@ -92,6 +92,7 @@ class TechnicalUseCase:
             "locations": [int(x) for x in locations.split(",")] if locations else [],
             "clients": [int(x) for x in clients.split(",")] if clients else [],
             "status": [x for x in status.split(",")] if status else [],
+            "support": params.get("support")
         }
 
         return self.technical_control_repository.get_task(filters, internal, external)

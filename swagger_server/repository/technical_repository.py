@@ -667,6 +667,11 @@ class TechnicalRepository:
                         TaskTechnical.status.in_(filters["status"])
                     )
 
+                if filters.get("support"):
+                    query_stmt = query_stmt.where(
+                        TaskTechnical.is_support == filters["support"]
+                    )
+
                 rows = session.execute(query_stmt).all()
 
                 data = [
@@ -681,6 +686,7 @@ class TechnicalRepository:
                         "location": location.name if location else None,
                         "code": task.code,
                         "status": task.status,
+                        "is_support": task.is_support,
                         "record_technical": record_technical or None,
                         "created_by": task.created_by,
                         "updated_by": task.updated_by,
@@ -718,6 +724,7 @@ class TechnicalRepository:
                     description=data.description,
                     code=code_generated,
                     status="Aprobado",
+                    is_support=data.is_support,
                     created_by=data.user,
                     updated_by=data.user
                 )
