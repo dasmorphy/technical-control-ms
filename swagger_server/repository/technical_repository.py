@@ -39,7 +39,7 @@ from swagger_server.models.db.vehicle_driver import VehicleDriver
 from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
-from sqlalchemy import ARRAY, JSON, String, Text, and_, case, cast, distinct, exists, func, select, text, update
+from sqlalchemy import ARRAY, JSON, String, Text, and_, case, cast, delete, distinct, exists, func, select, text, update
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -405,6 +405,129 @@ class TechnicalRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+            finally:
+                session.close()
+
+    def patch_technical_record(self, id_record, data, images, internal, external) -> None:
+        saved_files = []
+        old_image_paths = []
+
+        if len(images) > 10:
+            raise CustomAPIException("Máximo 10 imagenes", 400)
+
+        scalar_fields = {
+            "status": "status",
+            "task_id": "task_id",
+            "client_id": "client_id",
+            "location_id": "location_id",
+            "resume": "resume",
+            "vehicle": "vehicle",
+            "user": "updated_by",
+        }
+        collection_fields = {"materials", "technical_staff", "images"}
+        has_supported_field = any(key in data for key in scalar_fields) or any(
+            key in data for key in collection_fields
+        ) or bool(images)
+
+        if not has_supported_field:
+            raise CustomAPIException("No se enviaron campos para actualizar", 400)
+
+        with self.db.session_factory() as session:
+            try:
+                technical_record = session.get(TechnicalRecord, id_record)
+                if not technical_record:
+                    raise CustomAPIException("No existe el registro técnico", 404)
+
+                for request_field, model_field in scalar_fields.items():
+                    if request_field in data:
+                        setattr(technical_record, model_field, data[request_field])
+
+                technical_record.updated_at = datetime.now()
+
+                if "materials" in data:
+                    materials = data["materials"] or []
+                    if not isinstance(materials, list):
+                        raise CustomAPIException("materials debe ser un arreglo", 400)
+                    session.execute(
+                        delete(MaterialTechnicalRecord).where(
+                            MaterialTechnicalRecord.record_id == id_record
+                        )
+                    )
+                    for material in materials:
+                        if not isinstance(material, dict):
+                            raise CustomAPIException("Cada material debe ser un objeto", 400)
+                        session.add(
+                            MaterialTechnicalRecord(
+                                record_id=id_record,
+                                quantity=material.get("quantity"),
+                                equipment_id=material.get("id_equipment"),
+                                material=material.get("material"),
+                            )
+                        )
+
+                if "technical_staff" in data:
+                    technical_staff = data["technical_staff"] or []
+                    if not isinstance(technical_staff, list):
+                        raise CustomAPIException("technical_staff debe ser un arreglo", 400)
+                    session.execute(
+                        delete(TechStaffRecord).where(TechStaffRecord.record_id == id_record)
+                    )
+                    for tech_staff_id in technical_staff:
+                        session.add(
+                            TechStaffRecord(
+                                record_id=id_record,
+                                tech_staff_id=tech_staff_id,
+                            )
+                        )
+
+                if "images" in data or images:
+                    old_image_paths = list(
+                        session.scalars(
+                            select(TechRecordImage.image_path).where(
+                                TechRecordImage.record_id == id_record
+                            )
+                        ).all()
+                    )
+                    session.execute(
+                        delete(TechRecordImage).where(TechRecordImage.record_id == id_record)
+                    )
+                    for file in images:
+                        result = self.save_image(file)
+                        saved_files.append(result["url"])
+                        session.add(
+                            TechRecordImage(
+                                record_id=id_record,
+                                image_path=result["url"],
+                            )
+                        )
+
+                session.commit()
+
+                for path in old_image_paths:
+                    full_path = os.path.join("/var/www", path.lstrip("/"))
+                    try:
+                        if os.path.exists(full_path):
+                            os.remove(full_path)
+                    except OSError as exception:
+                        logger.warning(
+                            "No se pudo eliminar la imagen reemplazada: {}",
+                            str(exception),
+                            internal=internal,
+                            external=external,
+                        )
+
+            except Exception as exception:
+                session.rollback()
+                for path in saved_files:
+                    full_path = os.path.join("/var/www", path.lstrip("/"))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                raise CustomAPIException("Error al actualizar en la base de datos", 500)
 
             finally:
                 session.close()

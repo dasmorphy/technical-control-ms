@@ -12,6 +12,11 @@ class TechnicalUseCase:
     def post_technical_control(self, body, images, internal, external) -> None:
         self.technical_control_repository.post_technical_control(body, images, internal, external)
 
+    def patch_technical_record(self, id_record, body, images, internal, external) -> None:
+        self.technical_control_repository.patch_technical_record(
+            id_record, body, images, internal, external
+        )
+
     def put_technical_control(self, body, images, internal, external) -> None:
         self.technical_control_repository.put_technical_control(body, images, internal, external)
 

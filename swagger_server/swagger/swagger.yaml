@@ -1095,6 +1095,67 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /technical_record/{id_record}:
+    patch:
+      tags:
+      - Technical
+      summary: Actualiza parcialmente un registro técnico
+      description: |
+        Actualiza únicamente los campos enviados. Cuando se envían materials,
+        technical_staff o images, la colección existente se reemplaza completa.
+      operationId: patch_tech_record
+      parameters:
+        - name: id_record
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - technical_data
+              properties:
+                technical_data:
+                  type: string
+                  format: binary
+                  description: JSON con cualquier subconjunto de TechnicalData
+                images:
+                  type: array
+                  maxItems: 10
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
   /technical_record/pdf:
     get:
       tags:

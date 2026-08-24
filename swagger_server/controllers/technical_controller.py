@@ -694,6 +694,66 @@ class TechnicalView(MethodView):
             
         return response, status_code
 
+    def patch_tech_record(self, id_record):
+        internal_process = (None, None)
+        function_name = "patch_tech_record"
+        response = {}
+        status_code = 500
+        try:
+            if not request.content_type or not request.content_type.startswith("multipart/form-data"):
+                raise CustomAPIException("Content-Type debe ser multipart/form-data", 400)
+
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            technical_data = request.files.get("technical_data")
+
+            if not technical_data:
+                raise CustomAPIException("Campo technical_data no enviado", 400)
+
+            try:
+                technical_dict = json.loads(technical_data.read().decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                raise CustomAPIException("Campo technical_data contiene un JSON inválido", 400)
+
+            if not isinstance(technical_dict, dict):
+                raise CustomAPIException("Campo technical_data debe contener un objeto JSON", 400)
+
+            external_transaction_id = technical_dict.get("external_transaction_id")
+            channel = technical_dict.get("channel")
+            if not external_transaction_id or not channel:
+                raise CustomAPIException("channel y external_transaction_id son obligatorios", 400)
+
+            internal_process = (internal_transaction_id, external_transaction_id)
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            logger.info(
+                f"start request: {function_name}, channel: {channel}",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+
+            files = request.files.getlist("images")
+            self.technical_use_case.patch_technical_record(
+                id_record,
+                technical_dict,
+                files,
+                internal_transaction_id,
+                external_transaction_id,
+            )
+            response["error_code"] = 0
+            response["message"] = "Registro actualizado correctamente"
+            end_time = default_timer()
+            logger.info(
+                f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+
+        return response, status_code
+
     def get_tech_record_pdf(self):
         internal_process = (None, None)
         function_name = "get_tech_record_pdf"
