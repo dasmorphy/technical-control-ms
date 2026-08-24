@@ -938,6 +938,60 @@ class TechnicalRepository:
     def get_auditing(self, filters, internal, external):
         with self.db.session_factory() as session:
             try:
+                images_signature_subq = (
+                    select(
+                        AuditingSignaturesImg.auditing_id.label("auditing_id"),
+                        func.json_agg(
+                            func.json_build_object(
+                                "auditor_image", AuditingSignaturesImg.auditor_path,
+                                "client_image", AuditingSignaturesImg.client_path,
+                                "responsible_image", AuditingSignaturesImg.responsible_path,
+                            )
+                        ).label("images_signature")
+                    )
+                    .group_by(AuditingSignaturesImg.auditing_id)
+                    .subquery()
+                )
+
+                finding_images_subq = (
+                    select(
+                        AuditingFindingsImg.finding_auditing_id.label("finding_id"),
+                        func.array_agg(
+                            AuditingFindingsImg.img_path
+                        ).label("images")
+                    )
+                    .group_by(AuditingFindingsImg.finding_auditing_id)
+                    .subquery()
+                )
+
+                findings_subq = (
+                    select(
+                        AuditingFinding.auditing_id.label("auditing_id"),
+
+                        func.json_agg(
+                            func.json_build_object(
+                                "id_finding", AuditingFinding.id_finding,
+                                "description", AuditingFinding.description,
+                                "criticality", AuditingFinding.criticality,
+                                "responsible", AuditingFinding.responsible,
+                                "commitment", AuditingFinding.commitment,
+                                "images",
+                                func.coalesce(
+                                    finding_images_subq.c.images,
+                                    []
+                                )
+                            )
+                        ).label("findings")
+                    )
+                    .outerjoin(
+                        finding_images_subq,
+                        finding_images_subq.c.finding_id ==
+                        AuditingFinding.id_finding
+                    )
+                    .group_by(AuditingFinding.auditing_id)
+                    .subquery()
+                )
+
                 query_stmt = (
                     select(
                         Auditing,
@@ -946,6 +1000,8 @@ class TechnicalRepository:
                         AuditingSections,
                         ClientLocation,
                         Client,
+                        findings_subq.c.findings,
+                        images_signature_subq.c.images_signature
                     )
                     .outerjoin(
                         AuditingResponse,
@@ -966,6 +1022,14 @@ class TechnicalRepository:
                     .outerjoin(
                         Client,
                         Client.id_client == ClientLocation.client_id
+                    )
+                    .outerjoin(
+                        findings_subq,
+                        findings_subq.c.auditing_id == Auditing.id_auditing
+                    )
+                    .outerjoin(
+                        images_signature_subq,
+                        images_signature_subq.c.auditing_id == Auditing.id_auditing
                     )
                     .order_by(Auditing.created_at.desc())
                 )
@@ -989,7 +1053,16 @@ class TechnicalRepository:
 
                 auditing_map = {}
 
-                for auditing, response, item, section, client_location, client in rows:
+                for (
+                    auditing,
+                    response,
+                    item,
+                    section,
+                    client_location,
+                    client,
+                    findings,
+                    images_signature,
+                ) in rows:
                     if auditing.id_auditing not in auditing_map:
                         auditing_map[auditing.id_auditing] = {
                             "id_auditing": auditing.id_auditing,
@@ -1002,8 +1075,10 @@ class TechnicalRepository:
                             "updated_by": auditing.updated_by,
                             "created_at": auditing.created_at,
                             "updated_at": auditing.updated_at,
-                            "client_name": client.name,
-                            "location_name": client_location.name,
+                            "client_name": client.name if client else None,
+                            "location_name": client_location.name if client_location else None,
+                            "findings": findings or [],
+                            "images_signature": images_signature or [],
                             "responses": [],
                         }
 
