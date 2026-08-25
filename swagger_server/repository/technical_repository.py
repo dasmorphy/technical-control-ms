@@ -40,6 +40,7 @@ from swagger_server.models.db.vehicle_license import VehicleLicense
 from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
 from sqlalchemy import ARRAY, JSON, String, Text, and_, case, cast, delete, distinct, exists, func, select, text, update
+from sqlalchemy.dialects.postgresql import aggregate_order_by
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -720,17 +721,20 @@ class TechnicalRepository:
                     select(
                         TechnicalRecord.task_id.label("task_id"),
                         func.json_agg(
-                            func.json_build_object(
-                                "id_record", TechnicalRecord.id_record,
-                                "client_id", TechnicalRecord.client_id,
-                                "location_id", TechnicalRecord.location_id,
-                                "resume", TechnicalRecord.resume,
-                                "created_by", TechnicalRecord.created_by,
-                                "created_at", TechnicalRecord.created_at,
-                                "images", func.coalesce(
-                                    images_subq.c.images,
-                                    []
-                                )
+                            aggregate_order_by(
+                                func.json_build_object(
+                                    "id_record", TechnicalRecord.id_record,
+                                    "client_id", TechnicalRecord.client_id,
+                                    "location_id", TechnicalRecord.location_id,
+                                    "resume", TechnicalRecord.resume,
+                                    "created_by", TechnicalRecord.created_by,
+                                    "created_at", TechnicalRecord.created_at,
+                                    "images", func.coalesce(
+                                        images_subq.c.images,
+                                        []
+                                    )
+                                ),
+                                TechnicalRecord.created_at.desc()
                             )
                         ).label("record_technical")
                     )
@@ -739,7 +743,6 @@ class TechnicalRepository:
                         images_subq.c.record_id == TechnicalRecord.id_record
                     )
                     .group_by(TechnicalRecord.task_id)
-                    .order_by(TechnicalRecord.created_at.asc())
                     .subquery()
                 )
 
