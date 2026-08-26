@@ -28,6 +28,7 @@ from swagger_server.models.db.movilization_status import MovilizationStatus
 from swagger_server.models.db.reasons_movilization import ReasonsMovilization
 from swagger_server.models.db.task_location import TaskLocation
 from swagger_server.models.db.task_technical import TaskTechnical
+from swagger_server.models.db.task_technical_assignments import TaskTechnicalAssignment
 from swagger_server.models.db.tech_record_image import TechRecordImage
 from swagger_server.models.db.tech_staff_record import TechStaffRecord
 from swagger_server.models.db.technical_equipment import TechnicalEquipment
@@ -533,6 +534,168 @@ class TechnicalRepository:
             finally:
                 session.close()
 
+    def delete_technical_record(self, id_record, internal, external) -> None:
+        image_paths = []
+
+        with self.db.session_factory() as session:
+            try:
+                technical_record = session.get(TechnicalRecord, id_record)
+                if not technical_record:
+                    raise CustomAPIException("No existe el registro técnico", 404)
+
+                image_paths = list(
+                    session.scalars(
+                        select(TechRecordImage.image_path).where(
+                            TechRecordImage.record_id == id_record
+                        )
+                    ).all()
+                )
+
+                session.execute(
+                    delete(MaterialTechnicalRecord).where(
+                        MaterialTechnicalRecord.record_id == id_record
+                    )
+                )
+                session.execute(
+                    delete(TechStaffRecord).where(TechStaffRecord.record_id == id_record)
+                )
+                session.execute(
+                    delete(TechRecordImage).where(TechRecordImage.record_id == id_record)
+                )
+                session.delete(technical_record)
+                session.commit()
+
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                raise CustomAPIException("Error al eliminar en la base de datos", 500)
+            finally:
+                session.close()
+
+        self._remove_stored_files(image_paths, internal, external)
+
+    def delete_task_technical(self, id_task, internal, external) -> None:
+        image_paths = []
+
+        with self.db.session_factory() as session:
+            try:
+                task = session.get(TaskTechnical, id_task)
+                if not task:
+                    raise CustomAPIException("No existe la tarea técnica", 404)
+
+                record_ids = select(TechnicalRecord.id_record).where(
+                    TechnicalRecord.task_id == id_task
+                )
+                auditing_ids = select(Auditing.id_auditing).where(
+                    Auditing.task_id == id_task
+                )
+                finding_ids = select(AuditingFinding.id_finding).where(
+                    AuditingFinding.auditing_id.in_(auditing_ids)
+                )
+
+                image_paths.extend(
+                    session.scalars(
+                        select(TechRecordImage.image_path).where(
+                            TechRecordImage.record_id.in_(record_ids)
+                        )
+                    ).all()
+                )
+                image_paths.extend(
+                    session.scalars(
+                        select(AuditingFindingsImg.img_path).where(
+                            AuditingFindingsImg.finding_auditing_id.in_(finding_ids)
+                        )
+                    ).all()
+                )
+                signature_rows = session.execute(
+                    select(
+                        AuditingSignaturesImg.auditor_path,
+                        AuditingSignaturesImg.responsible_path,
+                        AuditingSignaturesImg.client_path,
+                    ).where(AuditingSignaturesImg.auditing_id.in_(auditing_ids))
+                ).all()
+                image_paths.extend(
+                    path for row in signature_rows for path in row if path
+                )
+
+                session.execute(
+                    delete(MaterialTechnicalRecord).where(
+                        MaterialTechnicalRecord.record_id.in_(record_ids)
+                    )
+                )
+                session.execute(
+                    delete(TechStaffRecord).where(
+                        TechStaffRecord.record_id.in_(record_ids)
+                    )
+                )
+                session.execute(
+                    delete(TechRecordImage).where(
+                        TechRecordImage.record_id.in_(record_ids)
+                    )
+                )
+                session.execute(
+                    delete(TechnicalRecord).where(TechnicalRecord.task_id == id_task)
+                )
+
+                session.execute(
+                    delete(AuditingFindingsImg).where(
+                        AuditingFindingsImg.finding_auditing_id.in_(finding_ids)
+                    )
+                )
+                session.execute(
+                    delete(AuditingFinding).where(
+                        AuditingFinding.auditing_id.in_(auditing_ids)
+                    )
+                )
+                session.execute(
+                    delete(AuditingResponse).where(
+                        AuditingResponse.auditing_id.in_(auditing_ids)
+                    )
+                )
+                session.execute(
+                    delete(AuditingSignaturesImg).where(
+                        AuditingSignaturesImg.auditing_id.in_(auditing_ids)
+                    )
+                )
+                session.execute(delete(Auditing).where(Auditing.task_id == id_task))
+                session.execute(
+                    delete(HistoryStatusProject).where(
+                        HistoryStatusProject.tech_task_id == id_task
+                    )
+                )
+                session.execute(
+                    delete(TaskLocation).where(TaskLocation.task_id == id_task)
+                )
+                session.delete(task)
+                session.commit()
+
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                raise CustomAPIException("Error al eliminar en la base de datos", 500)
+            finally:
+                session.close()
+
+        self._remove_stored_files(image_paths, internal, external)
+
+    @staticmethod
+    def _remove_stored_files(paths, internal, external):
+        for path in filter(None, paths):
+            full_path = os.path.join("/var/www", path.lstrip("/"))
+            try:
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+            except OSError as exception:
+                logger.warning(
+                    "No se pudo eliminar el archivo asociado: {}",
+                    str(exception),
+                    internal=internal,
+                    external=external,
+                )
 
 
     def put_technical_control(self, data, images, internal, external) -> None:
@@ -746,6 +909,21 @@ class TechnicalRepository:
                     .subquery()
                 )
 
+                tech_assignments_subq = (
+                    select(
+                        TaskTechnicalAssignment.task_id.label("task_id"),
+                        func.json_agg(
+                            func.json_build_object(
+                                "id_assignment", TaskTechnicalAssignment.id_assignment,
+                                "task_id", TaskTechnicalAssignment.task_id,
+                                "user_tech_id", TaskTechnicalAssignment.user_tech_id
+                            ),                            
+                        ).label("technicals_assignments")
+                    )
+                    .group_by(TaskTechnicalAssignment.task_id)
+                    .subquery()
+                )
+
 
                 query_stmt = (
                     select(
@@ -753,7 +931,8 @@ class TechnicalRepository:
                         ClientLocation,
                         Client,
                         tech_record_subq.c.record_technical,
-                        Users.user
+                        Users.user,
+                        tech_assignments_subq.c.record_technical
                     )
                     .outerjoin(
                         TaskLocation,
@@ -766,6 +945,10 @@ class TechnicalRepository:
                     .outerjoin(
                         Client,
                         Client.id_client == ClientLocation.client_id
+                    )
+                    .outerjoin(
+                        tech_assignments_subq,
+                        tech_assignments_subq.c.task_id == TaskTechnical.id_task
                     )
                     .outerjoin(
                         tech_record_subq,
@@ -815,12 +998,13 @@ class TechnicalRepository:
                         "status": task.status,
                         "is_support": task.is_support,
                         "record_technical": record_technical or None,
+                        "technicals_assignments": assignments or None,
                         "created_by": task.created_by,
                         "updated_by": task.updated_by,
                         "created_at": task.created_at,
                         "updated_at": task.updated_at
                     }
-                    for task, location, client, record_technical, user in rows
+                    for task, location, client, record_technical, user, assignments in rows
                 ]
 
                 return data
@@ -858,6 +1042,13 @@ class TechnicalRepository:
 
                 session.add(new_task)
                 session.flush()
+
+                for tech_user_id in data.assigned_technicians:
+                    technicals_assignment = TaskTechnicalAssignment(
+                        user_tech_id=tech_user_id,
+                        task_id=new_task.id_task
+                    )                    
+                    session.add(technicals_assignment)
 
                 new_task_location= TaskLocation(
                     location_id=data.location_id,

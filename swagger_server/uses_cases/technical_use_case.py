@@ -17,6 +17,16 @@ class TechnicalUseCase:
             id_record, body, images, internal, external
         )
 
+    def delete_technical_record(self, id_record, internal, external) -> None:
+        self.technical_control_repository.delete_technical_record(
+            id_record, internal, external
+        )
+
+    def delete_task_technical(self, id_task, internal, external) -> None:
+        self.technical_control_repository.delete_task_technical(
+            id_task, internal, external
+        )
+
     def put_technical_control(self, body, images, internal, external) -> None:
         self.technical_control_repository.put_technical_control(body, images, internal, external)
 

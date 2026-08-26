@@ -1366,3 +1366,58 @@ ALTER TABLE IF EXISTS technical.material_technical_record
     ON DELETE NO ACTION;
 CREATE INDEX IF NOT EXISTS fki_equipment_id_fkey
     ON technical.material_technical_record(equipment_id);
+
+
+-------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS technical.tech_staff_record
+    ADD COLUMN user_tech_id uuid;
+ALTER TABLE IF EXISTS technical.tech_staff_record
+    ADD CONSTRAINT user_tech_id FOREIGN KEY (user_tech_id)
+    REFERENCES public.users (id_user) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS fki_user_tech_id
+    ON technical.tech_staff_record(user_tech_id);
+
+-------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.task_technical_assignments
+(
+    id_assignment integer NOT NULL,
+    user_tech_id uuid,
+    task_id integer,
+    created_at timestamp without time zone DEFAULT now(),
+    updated_at timestamp without time zone DEFAULT now(),
+    CONSTRAINT assignment_pkey PRIMARY KEY (id_assignment),
+    CONSTRAINT user_id_assignment_fkey FOREIGN KEY (user_tech_id)
+        REFERENCES public.users (id_user) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION,
+    CONSTRAINT task_id_assignment_fkey FOREIGN KEY (task_id)
+        REFERENCES technical.task_technical (id_task) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.task_technical_assignments
+    OWNER to nextgen;
+
+
+CREATE SEQUENCE technical.task_technical_assignments_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.task_technical_assignments_id_seq
+    OWNED BY technical.task_technical_assignments.id_assignment;
+
+ALTER SEQUENCE technical.task_technical_assignments_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.task_technical_assignments
+    ALTER COLUMN id_assignment SET DEFAULT nextval('technical.task_technical_assignments_id_seq'::regclass);

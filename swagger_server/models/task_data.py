@@ -14,7 +14,7 @@ class TaskData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, location_id: int=None, name: str=None, description: str=None, is_support: bool=None, user: str=None):  # noqa: E501
+    def __init__(self, location_id: int=None, name: str=None, description: str=None, assigned_technicians: List[str]=None, is_support: bool=None, user: str=None):  # noqa: E501
         """TaskData - a model defined in Swagger
 
         :param location_id: The location_id of this TaskData.  # noqa: E501
@@ -23,6 +23,8 @@ class TaskData(Model):
         :type name: str
         :param description: The description of this TaskData.  # noqa: E501
         :type description: str
+        :param assigned_technicians: The assigned_technicians of this TaskData.  # noqa: E501
+        :type assigned_technicians: List[str]
         :param is_support: The is_support of this TaskData.  # noqa: E501
         :type is_support: bool
         :param user: The user of this TaskData.  # noqa: E501
@@ -32,6 +34,7 @@ class TaskData(Model):
             'location_id': int,
             'name': str,
             'description': str,
+            'assigned_technicians': List[str],
             'is_support': bool,
             'user': str
         }
@@ -40,12 +43,14 @@ class TaskData(Model):
             'location_id': 'location_id',
             'name': 'name',
             'description': 'description',
+            'assigned_technicians': 'assigned_technicians',
             'is_support': 'is_support',
             'user': 'user'
         }
         self._location_id = location_id
         self._name = name
         self._description = description
+        self._assigned_technicians = assigned_technicians
         self._is_support = is_support
         self._user = user
 
@@ -122,6 +127,27 @@ class TaskData(Model):
         """
 
         self._description = description
+
+    @property
+    def assigned_technicians(self) -> List[str]:
+        """Gets the assigned_technicians of this TaskData.
+
+
+        :return: The assigned_technicians of this TaskData.
+        :rtype: List[str]
+        """
+        return self._assigned_technicians
+
+    @assigned_technicians.setter
+    def assigned_technicians(self, assigned_technicians: List[str]):
+        """Sets the assigned_technicians of this TaskData.
+
+
+        :param assigned_technicians: The assigned_technicians of this TaskData.
+        :type assigned_technicians: List[str]
+        """
+
+        self._assigned_technicians = assigned_technicians
 
     @property
     def is_support(self) -> bool:

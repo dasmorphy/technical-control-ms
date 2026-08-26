@@ -754,6 +754,60 @@ class TechnicalView(MethodView):
 
         return response, status_code
 
+    def delete_tech_record(self, id_record):
+        return self._delete_by_id(
+            function_name="delete_tech_record",
+            success_message="Registro técnico eliminado correctamente",
+            delete_callback=lambda internal, external: self.technical_use_case.delete_technical_record(
+                id_record, internal, external
+            ),
+        )
+
+    def delete_project(self, id_task):
+        return self._delete_by_id(
+            function_name="delete_project",
+            success_message="Tarea técnica eliminada correctamente",
+            delete_callback=lambda internal, external: self.technical_use_case.delete_task_technical(
+                id_task, internal, external
+            ),
+        )
+
+    def _delete_by_id(self, function_name, success_message, delete_callback):
+        internal_process = (None, None)
+        response = {}
+        status_code = 500
+        try:
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            external_transaction_id = request.headers.get("externalTransactionId")
+            channel = request.headers.get("channel")
+            internal_process = (internal_transaction_id, external_transaction_id)
+
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            logger.info(
+                f"start request: {function_name}, channel: {channel}",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+
+            delete_callback(internal_transaction_id, external_transaction_id)
+            response["error_code"] = 0
+            response["message"] = success_message
+            end_time = default_timer()
+            logger.info(
+                f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(
+                ex, function_name, internal_process
+            )
+
+        return response, status_code
+
     def get_tech_record_pdf(self):
         internal_process = (None, None)
         function_name = "get_tech_record_pdf"
