@@ -102,11 +102,13 @@ class TechnicalUseCase:
         clients = params.get("clients")
         clients = params.get("clients")
         status = params.get("status")
+        tech_assignments = params.get("tech_assignments")
 
         filters = {
             "locations": [int(x) for x in locations.split(",")] if locations else [],
             "clients": [int(x) for x in clients.split(",")] if clients else [],
             "status": [x for x in status.split(",")] if status else [],
+            "tech_assignments": [x for x in tech_assignments.split(",")] if tech_assignments else [],
             "support": params.get("support")
         }
 
@@ -209,3 +211,6 @@ class TechnicalUseCase:
             "audited_percentage": round(audited_percentage, 2),
             "not_audited_percentage": round(not_audited_percentage, 2)
         }
+
+    def post_location(self, data, internal, external):
+            self.technical_control_repository.post_location(data, internal, external)

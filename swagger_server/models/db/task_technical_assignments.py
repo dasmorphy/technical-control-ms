@@ -12,7 +12,7 @@ from swagger_server.models.db import Base
 from sqlalchemy.dialects.postgresql import UUID
 
 class TaskTechnicalAssignment(Base):
-    __tablename__ = "task_technical_asignments"
+    __tablename__ = "task_technical_assignments"
     __table_args__ = {"schema": "technical"}
 
     id_assignment = Column(

@@ -916,9 +916,15 @@ class TechnicalRepository:
                             func.json_build_object(
                                 "id_assignment", TaskTechnicalAssignment.id_assignment,
                                 "task_id", TaskTechnicalAssignment.task_id,
-                                "user_tech_id", TaskTechnicalAssignment.user_tech_id
+                                "user_tech_id", TaskTechnicalAssignment.user_tech_id,
+                                "user", Users.user,
+                                "fullname_user", Users.attributes["fullname"]
                             ),                            
                         ).label("technicals_assignments")
+                    )
+                    .outerjoin(
+                        Users,
+                        Users.id_user == TaskTechnicalAssignment.user_tech_id
                     )
                     .group_by(TaskTechnicalAssignment.task_id)
                     .subquery()
@@ -932,7 +938,7 @@ class TechnicalRepository:
                         Client,
                         tech_record_subq.c.record_technical,
                         Users.user,
-                        tech_assignments_subq.c.record_technical
+                        tech_assignments_subq.c.technicals_assignments
                     )
                     .outerjoin(
                         TaskLocation,
@@ -975,6 +981,18 @@ class TechnicalRepository:
                 if filters.get("status"):
                     query_stmt = query_stmt.where(
                         TaskTechnical.status.in_(filters["status"])
+                    )
+
+                if filters.get("tech_assignments"):
+                    query_stmt = query_stmt.where(
+                        exists().where(
+                            and_(
+                                TaskTechnicalAssignment.task_id == TaskTechnical.id_task,
+                                cast(TaskTechnicalAssignment.user_tech_id, String).in_(
+                                    filters["tech_assignments"]
+                                )
+                            )
+                        )
                     )
 
                 if filters.get("support"):
@@ -1950,3 +1968,34 @@ class TechnicalRepository:
                 if isinstance(exception, CustomAPIException):
                     raise exception
                 raise CustomAPIException("Error al obtener el porcentaje de tareas técnicas auditadas", 500)
+
+
+    def post_location(self, data, internal, external) -> None:
+        with self.db.session_factory() as session:
+            try:
+                client = session.get(Client, data.get("client_id"))
+                if not client:
+                    raise CustomAPIException("No existe el cliente", 404)
+                
+                new_location = ClientLocation(
+                    name=data.get("name"),
+                    address=data.get("address"),
+                    long=data.get("long"),
+                    lat=data.get("lat"),
+                    created_by=data.get("user"),
+                    updated_by=data.get("user"),
+                    client_id=data.get("client_id")
+                )
+
+                session.add(new_location)
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+            finally:
+                session.close()

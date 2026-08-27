@@ -840,3 +840,31 @@ class TechnicalView(MethodView):
         except Exception as ex:
             response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
             return response, status_code
+
+    def post_location(self):
+        internal_process = (None, None)
+        function_name = "post_location"
+        response = {}
+        status_code = 500
+        try:
+            if connexion.request.is_json:
+                body = connexion.request.get_json()  # noqa: E501
+                start_time = default_timer()
+                internal_transaction_id = str(generate_internal_transaction_id())
+                external_transaction_id = body['external_transaction_id']
+                internal_process = (internal_transaction_id, external_transaction_id)
+                response["internal_transaction_id"] = internal_transaction_id
+                response["external_transaction_id"] = external_transaction_id
+                message = f"start request: {function_name}, channel: {body['channel']}"
+                logger.info(message, internal=internal_transaction_id, external=external_transaction_id)
+                self.technical_use_case.post_location(body['data'], internal_transaction_id, external_transaction_id)
+                response["error_code"] = 0
+                response["message"] = "Registro guardado correctamente"
+                end_time = default_timer()
+                logger.info(f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                    internal=internal_transaction_id, external=body['external_transaction_id'])
+                status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(ex, function_name, internal_process)
+            
+        return response, status_code
