@@ -551,6 +551,68 @@ class TechnicalView(MethodView):
                 
             return response, status_code
 
+    def post_tech_material(self):
+        internal_process = (None, None)
+        function_name = "post_tech_material"
+        response = {}
+        status_code = 500
+        try:
+            body = connexion.request.get_json()
+            if not connexion.request.is_json:
+                raise CustomAPIException("Content-Type debe ser application/json", 400)
+
+            equipment_data = body.get("data")
+            if not isinstance(equipment_data, dict):
+                raise CustomAPIException("El cuerpo debe ser un objeto JSON", 400)
+
+            product = equipment_data.get("product")
+            if not isinstance(product, str) or not product.strip():
+                raise CustomAPIException("El campo product es obligatorio", 400)
+            equipment_data["product"] = product.strip()
+
+            allowed_fields = {
+                "code", "product", "unit", "model", "base_price",
+                "profit_margin", "profit_margin_dollar", "price", "provider",
+                "description", "stock", "created_by", "created_at"
+            }
+            invalid_fields = set(equipment_data) - allowed_fields
+            if invalid_fields:
+                raise CustomAPIException(
+                    f"Campos no permitidos: {', '.join(sorted(invalid_fields))}", 400
+                )
+
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            external_transaction_id = request.headers.get("externalTransactionId")
+            internal_process = (internal_transaction_id, external_transaction_id)
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            logger.info(
+                f"start request: {function_name}, channel: {request.headers.get('channel')}",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+
+            self.technical_use_case.post_tech_material(
+                equipment_data, internal_transaction_id, external_transaction_id
+            )
+            response["error_code"] = 0
+            response["message"] = "Equipo técnico guardado correctamente"
+            # response["data"] = result
+            end_time = default_timer()
+            logger.info(
+                f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(
+                ex, function_name, internal_process
+            )
+
+        return response, status_code
+
 
     def get_auditing_sections(self):
         internal_process = (None, None)

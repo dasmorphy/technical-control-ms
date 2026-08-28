@@ -941,6 +941,46 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+    post:
+      tags:
+      - Catalogs
+      summary: Guarda un equipo o material técnico
+      description: Crea un registro en TechnicalEquipment. Solo product es obligatorio.
+      operationId: post_tech_material
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  $ref: "#/components/schemas/TechnicalEquipmentData"
+                channel:
+                  type: string
+                  example: Tech control
+                externalTransactionId:
+                  type: string
+                  example: fcea920f7412b5da7be0cf42b8c93759
+      responses:
+        "200":
+          description: Equipo o material creado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
   /auditing-sections:
     get:
       tags:
@@ -1523,6 +1563,53 @@ paths:
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
 components:
   schemas:
+    TechnicalEquipmentData:
+      type: object
+      additionalProperties: false
+      required:
+        - product
+      properties:
+        code:
+          type: string
+          nullable: true
+        product:
+          type: string
+          minLength: 1
+          example: "Cable UTP"
+        unit:
+          type: string
+          nullable: true
+        model:
+          type: string
+          nullable: true
+        base_price:
+          type: number
+          format: double
+          nullable: true
+        profit_margin:
+          type: number
+          format: double
+          nullable: true
+        profit_margin_dollar:
+          type: number
+          format: double
+          nullable: true
+        price:
+          type: number
+          format: double
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        stock:
+          type: integer
+          nullable: true
+        created_by:
+          type: string
+          nullable: true
     RequestPostTechnicalControl:
       properties:
         technical_data:

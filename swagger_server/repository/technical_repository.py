@@ -890,6 +890,8 @@ class TechnicalRepository:
                                     "client_id", TechnicalRecord.client_id,
                                     "location_id", TechnicalRecord.location_id,
                                     "resume", TechnicalRecord.resume,
+                                    "vehicle", TechnicalRecord.vehicle,
+                                    "status", TechnicalRecord.status,
                                     "created_by", TechnicalRecord.created_by,
                                     "created_at", TechnicalRecord.created_at,
                                     "images", func.coalesce(
@@ -1577,6 +1579,30 @@ class TechnicalRepository:
                         raise exception
                     
                     raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+    def post_tech_material(self, data, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                equipment_values = {
+                    field: data[field]
+                    for field in (
+                        "code", "product", "unit", "model", "base_price",
+                        "profit_margin", "profit_margin_dollar", "price",
+                        "provider", "description", "stock", "created_by"
+                    )
+                    if field in data
+                }
+                equipment = TechnicalEquipment(**equipment_values)
+                equipment.updated_by = data["created_by"]
+                session.add(equipment)
+                session.flush()
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                raise CustomAPIException("Error al insertar en la base de datos", 500)
 
 
     def get_auditing_sections(self, internal, external):
