@@ -45,10 +45,6 @@ from sqlalchemy import ARRAY, JSON, String, Text, and_, case, cast, delete, dist
 from sqlalchemy.dialects.postgresql import aggregate_order_by
 from swagger_server.config.access import access
 
-from werkzeug.utils import secure_filename
-from uuid import uuid4
-import getpass
-
 from swagger_server.service.notification_client import NotificationClient
 from swagger_server.service.rabbitMQ import RabbitMQClient
 from swagger_server.utils.utils import calculate_score_percentage
@@ -382,17 +378,18 @@ class TechnicalRepository:
                     )
                     session.add(tech_staff_record)
 
-                #Guardar imágenes (máx 10)
-                for file in images[:10]:
-                    result = self.save_image(file)
-                    saved_files.append(result["url"])
+                # Guardar imágenes (máx. 10) mediante el servicio de archivos.
+                if images:
+                    results = self.save_images(images[:10])
 
-                    image = TechRecordImage(
-                        record_id=record_technical_id,
-                        image_path=result["url"],
-                    )
-
-                    session.add(image)
+                    for result in results:
+                        saved_files.append(result["url"])
+                        session.add(
+                            TechRecordImage(
+                                record_id=record_technical_id,
+                                image_path=result["url"],
+                            )
+                        )
 
                 session.commit()
 
@@ -497,15 +494,17 @@ class TechnicalRepository:
                     session.execute(
                         delete(TechRecordImage).where(TechRecordImage.record_id == id_record)
                     )
-                    for file in images:
-                        result = self.save_image(file)
-                        saved_files.append(result["url"])
-                        session.add(
-                            TechRecordImage(
-                                record_id=id_record,
-                                image_path=result["url"],
+                    if images:
+                        results = self.save_images(images)
+
+                        for result in results:
+                            saved_files.append(result["url"])
+                            session.add(
+                                TechRecordImage(
+                                    record_id=id_record,
+                                    image_path=result["url"],
+                                )
                             )
-                        )
 
                 session.commit()
 
@@ -733,18 +732,19 @@ class TechnicalRepository:
 
                 movilization_id = movilization.id_movilization
 
-                #Guardar imágenes (máx 10)
-                for file in images[:10]:
-                    result = self.save_image(file)
-                    saved_files.append(result["url"])
+                # Guardar imágenes (máx. 10) mediante el servicio de archivos.
+                if images:
+                    results = self.save_images(images[:10])
 
-                    image = MovilizationImages(
-                        movilization_id=movilization_id,
-                        image_path=result["url"],
-                        type="finales"
-                    )
-
-                    session.add(image)
+                    for result in results:
+                        saved_files.append(result["url"])
+                        session.add(
+                            MovilizationImages(
+                                movilization_id=movilization_id,
+                                image_path=result["url"],
+                                type="finales"
+                            )
+                        )
 
                 session.commit()
 
@@ -767,33 +767,40 @@ class TechnicalRepository:
                 session.close()
 
 
-    def save_image(self, file, name_folder: str = "technical"):
+    def save_images(self, images, name_folder: str = "technical"):
         try:
+            files = []
+
+            for image in images:
+                files.append(
+                    (
+                        "files",
+                        (
+                            image.filename,
+                            image.stream,
+                            image.mimetype
+                        )
+                    )
+                )
+
             response = requests.post(
                 self.api_upload_image,
-                files={
-                    "file": (
-                        file.filename,
-                        file.stream,
-                        file.mimetype
-                    )
-                },
+                files=files,
                 data={
                     "folder": name_folder
                 },
-                timeout=30
+                timeout=(5, 60)
             )
 
             response.raise_for_status()
 
-            result = response.json()
-
-            return {
-                "url": result["data"]["url"]
-            }
+            return response.json()["data"]
 
         except requests.exceptions.Timeout:
-            raise CustomAPIException("Timeout al intentar guardar la imagen", 504)
+            raise CustomAPIException(
+                "Timeout al intentar guardar las imágenes",
+                504
+            )
 
         except requests.exceptions.ConnectionError:
             raise CustomAPIException(
@@ -809,7 +816,7 @@ class TechnicalRepository:
 
         except requests.exceptions.RequestException as ex:
             raise CustomAPIException(
-                f"Error al guardar la imagen: {str(ex)}",
+                f"Error al guardar las imágenes: {str(ex)}",
                 500
             )
 
@@ -1503,16 +1510,28 @@ class TechnicalRepository:
                     session.add(new_finding)
                     session.flush()
 
-                    # Guardar imágenes del hallazgo
+
+                    finding_images = []
+
                     for image_name in finding.get("images"):
                         image = images.get(image_name)
 
                         if image:
-                            result = self.save_image(image, "findings")
+                            finding_images.append(image)
+
+                    # Guardar imágenes del hallazgo
+                    if finding_images:
+                        results = self.save_images(
+                            finding_images,
+                            "findings"
+                        )
+
+                        for result in results:
                             saved_files.append(result["url"])
+
                             new_image = AuditingFindingsImg(
                                 finding_auditing_id=new_finding.id_finding,
-                                img_path=result["url"],
+                                img_path=result["url"]
                             )
 
                             session.add(new_image)
@@ -1527,11 +1546,26 @@ class TechnicalRepository:
                     auditing_id=new_auditing.id_auditing,
                 )
 
+                signature_fields = []
+                signature_images = []
+
                 for field in fields:
                     image = images.get(field.replace("_path", "_img"))
 
                     if image:
-                        result = self.save_image(image, "signatures")
+                        signature_fields.append(field)
+                        signature_images.append(image)
+
+                if signature_images:
+                    results = self.save_images(signature_images, "signatures")
+
+                    if len(results) != len(signature_fields):
+                        raise CustomAPIException(
+                            "El servidor de imágenes no procesó todas las firmas",
+                            502
+                        )
+
+                    for field, result in zip(signature_fields, results):
                         saved_files.append(result["url"])
                         setattr(signature, field, result["url"])
 
