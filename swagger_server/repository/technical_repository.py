@@ -2,6 +2,7 @@ from datetime import datetime
 import os
 
 from loguru import logger
+import requests
 from sqlalchemy.orm import aliased
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
@@ -42,6 +43,7 @@ from swagger_server.models.task_data import TaskData
 from swagger_server.resources.databases.postgresql import PostgreSQLClient
 from sqlalchemy import ARRAY, JSON, String, Text, and_, case, cast, delete, distinct, exists, func, select, text, update
 from sqlalchemy.dialects.postgresql import aggregate_order_by
+from swagger_server.config.access import access
 
 from werkzeug.utils import secure_filename
 from uuid import uuid4
@@ -58,6 +60,7 @@ class TechnicalRepository:
         self.db = PostgreSQLClient("POSTGRESQL")
         self.notification_client = NotificationClient()
         self.rabbitMQ = RabbitMQClient()
+        self.api_upload_image = access()["API_UPLOAD_IMAGE"]
 
 
 
@@ -764,42 +767,52 @@ class TechnicalRepository:
                 session.close()
 
 
-    def save_image(self, file,  name_folder: str="technical"):
-        folder = f"/var/www/uploads/{name_folder}"
-        ALLOWED_EXTENSIONS = {"webp"}
-        MAX_FILENAME_LEN = 255
-        MAX_BASENAME_LEN = 50
+    def save_image(self, file, name_folder: str = "technical"):
+        try:
+            response = requests.post(
+                self.api_upload_image,
+                files={
+                    "file": (
+                        file.filename,
+                        file.stream,
+                        file.mimetype
+                    )
+                },
+                data={
+                    "folder": name_folder
+                },
+                timeout=30
+            )
 
-        if not file or file.filename == "":
-            raise ValueError("Archivo inválido")
+            response.raise_for_status()
 
-        if not os.path.exists(folder):
-            raise CustomAPIException(f"La carpeta root de imágenes no existe {getpass.getuser()} - {os.getuid()} - {os.geteuid()}", 404)
-        
+            result = response.json()
 
-        if not os.access(folder, os.W_OK):
-            raise CustomAPIException(f"No hay permisos de escritura en la carpeta de imágenes {getpass.getuser()} - {os.getuid()} - {os.geteuid()}", 400)
-        
-        ext = file.filename.rsplit(".", 1)[-1].lower()
+            return {
+                "url": result["data"]["url"]
+            }
 
-        # if ext not in ALLOWED_EXTENSIONS:
-        #     raise ValueError("Formato no permitido. Solo se acepta WEBP.")
+        except requests.exceptions.Timeout:
+            raise CustomAPIException("Timeout al intentar guardar la imagen", 504)
 
-        original_name = secure_filename(file.filename)
-        base_name = os.path.splitext(original_name)[0][:MAX_BASENAME_LEN]
+        except requests.exceptions.ConnectionError:
+            raise CustomAPIException(
+                "No se pudo conectar con el servidor de imágenes",
+                503
+            )
 
-        filename = f"{uuid4()}_{base_name}.webp"
+        except requests.exceptions.HTTPError as ex:
+            raise CustomAPIException(
+                f"El servidor de imágenes respondió con error: {ex.response.status_code}",
+                ex.response.status_code
+            )
 
-        if len(filename.encode("utf-8")) > MAX_FILENAME_LEN:
-            filename = f"{uuid4().hex}.webp"
+        except requests.exceptions.RequestException as ex:
+            raise CustomAPIException(
+                f"Error al guardar la imagen: {str(ex)}",
+                500
+            )
 
-        path = os.path.join(folder, filename)
-        file.save(path)
-
-        return {
-            "url": f"/uploads/{name_folder}/{filename}"
-        }
-    
     def get_clients(self, internal, external):
         with self.db.session_factory() as session:
             try:

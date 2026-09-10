@@ -33,7 +33,8 @@ def access():
             "VHOST": os.getenv('RABBIT_VHOST'),
             "USER": os.getenv('RABBIT_USER'),
             "PASS": os.getenv('RABBITMQ_PASS').strip("'")
-        }
+        },
+        "API_UPLOAD_IMAGE": os.getenv('API_UPLOAD_IMAGE'),
     }
 
 def access_mode():
