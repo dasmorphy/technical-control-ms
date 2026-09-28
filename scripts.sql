@@ -1385,15 +1385,11 @@ CREATE INDEX IF NOT EXISTS fki_user_tech_id
 CREATE TABLE technical.task_technical_assignments
 (
     id_assignment integer NOT NULL,
-    user_tech_id uuid,
+    "user" text,
     task_id integer,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     CONSTRAINT assignment_pkey PRIMARY KEY (id_assignment),
-    CONSTRAINT user_id_assignment_fkey FOREIGN KEY (user_tech_id)
-        REFERENCES public.users (id_user) MATCH SIMPLE
-        ON UPDATE NO ACTION
-        ON DELETE NO ACTION,
     CONSTRAINT task_id_assignment_fkey FOREIGN KEY (task_id)
         REFERENCES technical.task_technical (id_task) MATCH SIMPLE
         ON UPDATE NO ACTION

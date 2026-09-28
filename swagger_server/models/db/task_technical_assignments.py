@@ -9,7 +9,6 @@ from sqlalchemy import (
     func
 )
 from swagger_server.models.db import Base
-from sqlalchemy.dialects.postgresql import UUID
 
 class TaskTechnicalAssignment(Base):
     __tablename__ = "task_technical_assignments"
@@ -27,10 +26,7 @@ class TaskTechnicalAssignment(Base):
         ForeignKey("technical.task_technical.id_task")
     )
 
-    user_tech_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("public.users.id_user")
-    )
+    user = Column(Text)
 
     created_at = Column(
         DateTime,

@@ -576,7 +576,7 @@ class TechnicalRepository:
             finally:
                 session.close()
 
-        self._remove_stored_files(image_paths, internal, external)
+        # self._remove_stored_files(image_paths, internal, external)
 
     def delete_task_technical(self, id_task, internal, external) -> None:
         image_paths = []
@@ -669,6 +669,11 @@ class TechnicalRepository:
                 )
                 session.execute(
                     delete(TaskLocation).where(TaskLocation.task_id == id_task)
+                )
+                session.execute(
+                    delete(TaskTechnicalAssignment).where(
+                        TaskTechnicalAssignment.task_id == id_task
+                    )
                 )
                 session.delete(task)
                 session.commit()
@@ -938,7 +943,7 @@ class TechnicalRepository:
                             func.json_build_object(
                                 "id_assignment", TaskTechnicalAssignment.id_assignment,
                                 "task_id", TaskTechnicalAssignment.task_id,
-                                "user_tech_id", TaskTechnicalAssignment.user_tech_id,
+                                "user_tech_id", TaskTechnicalAssignment.user,
                                 "user", Users.user,
                                 "fullname_user", Users.attributes["fullname"]
                             ),                            
@@ -946,7 +951,7 @@ class TechnicalRepository:
                     )
                     .outerjoin(
                         Users,
-                        Users.id_user == TaskTechnicalAssignment.user_tech_id
+                        Users.user == TaskTechnicalAssignment.user
                     )
                     .group_by(TaskTechnicalAssignment.task_id)
                     .subquery()
@@ -1010,7 +1015,7 @@ class TechnicalRepository:
                         exists().where(
                             and_(
                                 TaskTechnicalAssignment.task_id == TaskTechnical.id_task,
-                                cast(TaskTechnicalAssignment.user_tech_id, String).in_(
+                                TaskTechnicalAssignment.user.in_(
                                     filters["tech_assignments"]
                                 )
                             )
@@ -1083,9 +1088,23 @@ class TechnicalRepository:
                 session.add(new_task)
                 session.flush()
 
-                for tech_user_id in data.assigned_technicians:
+                tech_ids = data.assigned_technicians or []
+                tech_users = dict(
+                    session.execute(
+                        select(cast(Users.id_user, String), Users.user)
+                        .where(cast(Users.id_user, String).in_(tech_ids))
+                    ).all()
+                )
+
+                missing_ids = [tech_id for tech_id in tech_ids if tech_id not in tech_users]
+                if missing_ids:
+                    raise CustomAPIException(
+                        f"Técnicos no encontrados: {', '.join(missing_ids)}", 404
+                    )
+
+                for tech_id in tech_ids:
                     technicals_assignment = TaskTechnicalAssignment(
-                        user_tech_id=tech_user_id,
+                        user=tech_users[tech_id],
                         task_id=new_task.id_task
                     )                    
                     session.add(technicals_assignment)

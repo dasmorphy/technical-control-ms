@@ -1934,7 +1934,7 @@ components:
           type: array
           items:
             type: string
-          example: ["fcea920f7412b5da7be0cf42b8c9375"]
+          example: ["dmales"]
         is_support:
           type: boolean
           nullable: true
