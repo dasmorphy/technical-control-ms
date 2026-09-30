@@ -1090,23 +1090,23 @@ class TechnicalRepository:
                 session.add(new_task)
                 session.flush()
 
-                tech_users = data.assigned_technicians or []
+                tech_ids = data.assigned_technicians or []
                 tech_users = dict(
                     session.execute(
                         select(cast(Users.id_user, String), Users.user)
-                        .where(cast(Users.user, String).in_(tech_users))
+                        .where(cast(Users.id_user, String).in_(tech_ids))
                     ).all()
                 )
 
-                missing_ids = [tech_id for tech_id in tech_users if tech_id not in tech_users]
+                missing_ids = [tech_id for tech_id in tech_ids if tech_id not in tech_users]
                 if missing_ids:
                     raise CustomAPIException(
                         f"Técnicos no encontrados: {', '.join(missing_ids)}", 404
                     )
 
-                for tech_user_id in data.assigned_technicians:
+                for tech_id in tech_ids:
                     technicals_assignment = TaskTechnicalAssignment(
-                        user=tech_user_id,
+                        user=tech_users[tech_id],
                         task_id=new_task.id_task
                     )                    
                     session.add(technicals_assignment)
