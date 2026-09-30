@@ -17,6 +17,7 @@ from swagger_server.models.db.auditing_signatures_img import AuditingSignaturesI
 from swagger_server.models.db.client import Client
 from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.history_status_project import HistoryStatusProject
+from swagger_server.models.db.inspection_technical import InspectionTechnical
 from swagger_server.models.db.level_gasoline import LevelGasoline
 from swagger_server.models.db.location import ClientLocation
 from swagger_server.models.db.material_technical_record import MaterialTechnicalRecord
@@ -1078,6 +1079,7 @@ class TechnicalRepository:
                 new_task = TaskTechnical(
                     name=data.name,
                     description=data.description,
+                    inspection_id=data.inspection_id,
                     code=code_generated,
                     status="Aprobado",
                     is_support=data.is_support,
@@ -1088,23 +1090,23 @@ class TechnicalRepository:
                 session.add(new_task)
                 session.flush()
 
-                tech_ids = data.assigned_technicians or []
+                tech_users = data.assigned_technicians or []
                 tech_users = dict(
                     session.execute(
                         select(cast(Users.id_user, String), Users.user)
-                        .where(cast(Users.id_user, String).in_(tech_ids))
+                        .where(cast(Users.user, String).in_(tech_users))
                     ).all()
                 )
 
-                missing_ids = [tech_id for tech_id in tech_ids if tech_id not in tech_users]
+                missing_ids = [tech_id for tech_id in tech_users if tech_id not in tech_users]
                 if missing_ids:
                     raise CustomAPIException(
                         f"Técnicos no encontrados: {', '.join(missing_ids)}", 404
                     )
 
-                for tech_id in tech_ids:
+                for tech_user_id in data.assigned_technicians:
                     technicals_assignment = TaskTechnicalAssignment(
-                        user=tech_users[tech_id],
+                        user=tech_user_id,
                         task_id=new_task.id_task
                     )                    
                     session.add(technicals_assignment)

@@ -1417,3 +1417,16 @@ ALTER SEQUENCE technical.task_technical_assignments_id_seq
 
 ALTER TABLE IF EXISTS technical.task_technical_assignments
     ALTER COLUMN id_assignment SET DEFAULT nextval('technical.task_technical_assignments_id_seq'::regclass);
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS technical.task_technical
+    ADD COLUMN inspection_id integer;
+ALTER TABLE IF EXISTS technical.task_technical
+    ADD CONSTRAINT inspection_task_fkey FOREIGN KEY (inspection_id)
+    REFERENCES internal_management.inspection_technical (id_inspection) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS fki_inspection_task_fkey
+    ON technical.task_technical(inspection_id);

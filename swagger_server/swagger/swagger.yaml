@@ -1930,6 +1930,10 @@ components:
         description:
           type: string
           example: "N/A"
+        inspection_id:
+          type: integer
+          nullable: true
+          example: 1
         assigned_technicians:
           type: array
           items:

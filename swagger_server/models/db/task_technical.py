@@ -22,6 +22,11 @@ class TaskTechnical(Base):
         nullable=False
     )
 
+    inspection_id = Column(
+        Integer,
+        ForeignKey("internal_management.inspection_technical.id_inspection"),
+    )
+
     name = Column(Text)
     description = Column(Text)
     code = Column(Text)
