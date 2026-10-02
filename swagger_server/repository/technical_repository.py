@@ -1012,13 +1012,18 @@ class TechnicalRepository:
                     )
 
                 if filters.get("tech_assignments"):
+                    users_subq = (
+                        select(Users.user)
+                        .where(
+                            Users.id_user.in_(filters["tech_assignments"])
+                        )
+                    )
+
                     query_stmt = query_stmt.where(
                         exists().where(
                             and_(
                                 TaskTechnicalAssignment.task_id == TaskTechnical.id_task,
-                                TaskTechnicalAssignment.user.in_(
-                                    filters["tech_assignments"]
-                                )
+                                TaskTechnicalAssignment.user.in_(users_subq)
                             )
                         )
                     )
