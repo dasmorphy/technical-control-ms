@@ -23,6 +23,11 @@ class TechnicalEquipment(Base):
         nullable=False
     )
 
+    provider_id = Column(
+        Integer,
+        ForeignKey("technical.providers_products.id_provider")
+    )
+
     code = Column(Text)
     product = Column(Text)
     unit = Column(Text)

@@ -27,6 +27,7 @@ from swagger_server.models.db.movilization_copilot import MovilizationCopilot
 from swagger_server.models.db.movilization_images import MovilizationImages
 from swagger_server.models.db.movilization_reason import MovilizationReason
 from swagger_server.models.db.movilization_status import MovilizationStatus
+from swagger_server.models.db.providers_products import ProvidersProducts
 from swagger_server.models.db.reasons_movilization import ReasonsMovilization
 from swagger_server.models.db.task_location import TaskLocation
 from swagger_server.models.db.task_technical import TaskTechnical
@@ -1619,8 +1620,16 @@ class TechnicalRepository:
     def get_tech_materials(self, internal, external):
             with self.db.session_factory() as session:
                 try:
-                    query_stmt = select(TechnicalEquipment)
-                    rows = session.execute(query_stmt).scalars().all()
+                    query_stmt = select(
+                        TechnicalEquipment, 
+                        ProvidersProducts.provider
+                    ).outerjoin(
+                        ProvidersProducts, 
+                        TechnicalEquipment.provider_id == ProvidersProducts.id_provider
+                    ).order_by(
+                        TechnicalEquipment.product.asc()
+                    )
+                    rows = session.execute(query_stmt).all()
     
                     data = [
                         {
@@ -1633,7 +1642,7 @@ class TechnicalRepository:
                             "profit_margin": record.profit_margin,
                             "profit_margin_dollar": record.profit_margin_dollar,
                             "price": record.price,
-                            "provider": record.provider,
+                            "provider": provider,
                             "description": record.description,
                             "stock": record.stock,
                             "created_by": record.created_by,
@@ -1641,7 +1650,7 @@ class TechnicalRepository:
                             "created_at": record.created_at,
                             "updated_at": record.updated_at
                         }
-                        for record in rows
+                        for record, provider in rows
                     ]
     
                     return data
