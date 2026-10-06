@@ -1643,6 +1643,7 @@ class TechnicalRepository:
                             "profit_margin_dollar": record.profit_margin_dollar,
                             "price": record.price,
                             "provider": provider,
+                            "provider_id": record.provider_id,
                             "description": record.description,
                             "stock": record.stock,
                             "created_by": record.created_by,
@@ -1670,7 +1671,8 @@ class TechnicalRepository:
                     for field in (
                         "code", "product", "unit", "model", "base_price",
                         "profit_margin", "profit_margin_dollar", "price",
-                        "provider", "description", "stock", "created_by"
+                        "provider", "description", "stock", "created_by",
+                        "provider_id"
                     )
                     if field in data
                 }

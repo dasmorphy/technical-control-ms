@@ -573,7 +573,7 @@ class TechnicalView(MethodView):
             allowed_fields = {
                 "code", "product", "unit", "model", "base_price",
                 "profit_margin", "profit_margin_dollar", "price", "provider",
-                "description", "stock", "created_by", "created_at"
+                "description", "stock", "created_by", "created_at", "provider_id"
             }
             invalid_fields = set(equipment_data) - allowed_fields
             if invalid_fields:

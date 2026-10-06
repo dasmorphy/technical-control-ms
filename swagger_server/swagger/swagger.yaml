@@ -1601,6 +1601,10 @@ components:
         provider:
           type: string
           nullable: true
+        provider_id:
+          type: number
+          nullable: true
+          example: 1
         description:
           type: string
           nullable: true
