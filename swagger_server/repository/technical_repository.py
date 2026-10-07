@@ -1092,6 +1092,9 @@ class TechnicalRepository:
                         "code": task.code,
                         "status": task.status,
                         "is_support": task.is_support,
+                        "start_date": task.start_date,
+                        "responsible": task.responsible,
+                        "end_date": task.end_date,
                         "record_technical": record_technical or None,
                         "technicals_assignments": assignments or None,
                         "created_by": task.created_by,
@@ -1132,6 +1135,9 @@ class TechnicalRepository:
                     code=code_generated,
                     status="Aprobado",
                     is_support=data.is_support,
+                    start_date=data.start_date,
+                    end_date=data.end_date,
+                    responsible=data.responsible,
                     created_by=data.user,
                     updated_by=data.user
                 )
@@ -1679,7 +1685,7 @@ class TechnicalRepository:
                     select(EquipmentImages).order_by(EquipmentImages.id_image.asc())
                 ).scalars().all():
                     images_by_equipment.setdefault(image.equipment_tech_id, []).append(
-                        {"image_path": image.image_path}
+                        {"id_image": image.id_image, "image_path": image.image_path}
                     )
 
                 data = [

@@ -1430,3 +1430,14 @@ ALTER TABLE IF EXISTS technical.task_technical
     ON DELETE NO ACTION;
 CREATE INDEX IF NOT EXISTS fki_inspection_task_fkey
     ON technical.task_technical(inspection_id);
+
+------------------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS technical.task_technical
+    ADD COLUMN start_date timestamp without time zone;
+
+ALTER TABLE IF EXISTS technical.task_technical
+    ADD COLUMN end_date timestamp without time zone;
+
+ALTER TABLE IF EXISTS technical.task_technical
+    ADD COLUMN responsible text;

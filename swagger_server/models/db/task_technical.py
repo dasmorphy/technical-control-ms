@@ -33,10 +33,14 @@ class TaskTechnical(Base):
     status = Column(Text)
     requested_by = Column(Text)
     is_support = Column(Boolean)
+    responsible = Column(Text)
     
 
     created_by = Column(Text)
     updated_by = Column(Text)
+
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
 
     created_at = Column(
         DateTime,

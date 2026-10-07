@@ -1999,10 +1999,21 @@ components:
         description:
           type: string
           example: "N/A"
+        responsible:
+          type: string
+          example: "dmales"
         inspection_id:
           type: integer
           nullable: true
           example: 1
+        start_date:
+          type: string
+          format: date-time
+          example: "2025-01-21T00:00:00"
+        end_date:
+          type: string
+          format: date-time
+          example: "2025-01-21T00:00:00"
         assigned_technicians:
           type: array
           items:

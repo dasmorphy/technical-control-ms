@@ -14,7 +14,7 @@ class TaskData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, location_id: int=None, name: str=None, description: str=None, inspection_id: int=None, assigned_technicians: List[str]=None, is_support: bool=None, user: str=None):  # noqa: E501
+    def __init__(self, location_id: int=None, name: str=None, description: str=None, responsible: str=None, inspection_id: int=None, start_date: datetime=None, end_date: datetime=None, assigned_technicians: List[str]=None, is_support: bool=None, user: str=None):  # noqa: E501
         """TaskData - a model defined in Swagger
 
         :param location_id: The location_id of this TaskData.  # noqa: E501
@@ -23,8 +23,14 @@ class TaskData(Model):
         :type name: str
         :param description: The description of this TaskData.  # noqa: E501
         :type description: str
+        :param responsible: The responsible of this TaskData.  # noqa: E501
+        :type responsible: str
         :param inspection_id: The inspection_id of this TaskData.  # noqa: E501
         :type inspection_id: int
+        :param start_date: The start_date of this TaskData.  # noqa: E501
+        :type start_date: datetime
+        :param end_date: The end_date of this TaskData.  # noqa: E501
+        :type end_date: datetime
         :param assigned_technicians: The assigned_technicians of this TaskData.  # noqa: E501
         :type assigned_technicians: List[str]
         :param is_support: The is_support of this TaskData.  # noqa: E501
@@ -36,7 +42,10 @@ class TaskData(Model):
             'location_id': int,
             'name': str,
             'description': str,
+            'responsible': str,
             'inspection_id': int,
+            'start_date': datetime,
+            'end_date': datetime,
             'assigned_technicians': List[str],
             'is_support': bool,
             'user': str
@@ -46,7 +55,10 @@ class TaskData(Model):
             'location_id': 'location_id',
             'name': 'name',
             'description': 'description',
+            'responsible': 'responsible',
             'inspection_id': 'inspection_id',
+            'start_date': 'start_date',
+            'end_date': 'end_date',
             'assigned_technicians': 'assigned_technicians',
             'is_support': 'is_support',
             'user': 'user'
@@ -54,7 +66,10 @@ class TaskData(Model):
         self._location_id = location_id
         self._name = name
         self._description = description
+        self._responsible = responsible
         self._inspection_id = inspection_id
+        self._start_date = start_date
+        self._end_date = end_date
         self._assigned_technicians = assigned_technicians
         self._is_support = is_support
         self._user = user
@@ -134,6 +149,27 @@ class TaskData(Model):
         self._description = description
 
     @property
+    def responsible(self) -> str:
+        """Gets the responsible of this TaskData.
+
+
+        :return: The responsible of this TaskData.
+        :rtype: str
+        """
+        return self._responsible
+
+    @responsible.setter
+    def responsible(self, responsible: str):
+        """Sets the responsible of this TaskData.
+
+
+        :param responsible: The responsible of this TaskData.
+        :type responsible: str
+        """
+
+        self._responsible = responsible
+
+    @property
     def inspection_id(self) -> int:
         """Gets the inspection_id of this TaskData.
 
@@ -153,6 +189,48 @@ class TaskData(Model):
         """
 
         self._inspection_id = inspection_id
+
+    @property
+    def start_date(self) -> datetime:
+        """Gets the start_date of this TaskData.
+
+
+        :return: The start_date of this TaskData.
+        :rtype: datetime
+        """
+        return self._start_date
+
+    @start_date.setter
+    def start_date(self, start_date: datetime):
+        """Sets the start_date of this TaskData.
+
+
+        :param start_date: The start_date of this TaskData.
+        :type start_date: datetime
+        """
+
+        self._start_date = start_date
+
+    @property
+    def end_date(self) -> datetime:
+        """Gets the end_date of this TaskData.
+
+
+        :return: The end_date of this TaskData.
+        :rtype: datetime
+        """
+        return self._end_date
+
+    @end_date.setter
+    def end_date(self, end_date: datetime):
+        """Sets the end_date of this TaskData.
+
+
+        :param end_date: The end_date of this TaskData.
+        :type end_date: datetime
+        """
+
+        self._end_date = end_date
 
     @property
     def assigned_technicians(self) -> List[str]:
