@@ -551,19 +551,39 @@ class TechnicalView(MethodView):
                 
             return response, status_code
 
+    @staticmethod
+    def _read_material_multipart():
+        """Lee el multipart de materiales: JSON en el campo "data" (Blob) e imágenes en "images"."""
+        if not (request.content_type or "").startswith("multipart/form-data"):
+            raise CustomAPIException("Content-Type debe ser multipart/form-data", 400)
+
+        data_file = request.files.get("data")
+        data_raw = data_file.read().decode("utf-8") if data_file else request.form.get("data")
+        if not data_raw:
+            raise CustomAPIException("Campo data no enviado", 400)
+
+        try:
+            equipment_data = json.loads(data_raw)
+        except ValueError:
+            raise CustomAPIException("El campo data no es un JSON válido", 400)
+
+        if not isinstance(equipment_data, dict):
+            raise CustomAPIException("El campo data debe ser un objeto JSON", 400)
+
+        channel = equipment_data.pop("channel", None) or request.headers.get("channel")
+        external_transaction_id = (
+            equipment_data.pop("external_transaction_id", None)
+            or request.headers.get("externalTransactionId")
+        )
+        return equipment_data, request.files.getlist("images"), channel, external_transaction_id
+
     def post_tech_material(self):
         internal_process = (None, None)
         function_name = "post_tech_material"
         response = {}
         status_code = 500
         try:
-            body = connexion.request.get_json()
-            if not connexion.request.is_json:
-                raise CustomAPIException("Content-Type debe ser application/json", 400)
-
-            equipment_data = body.get("data")
-            if not isinstance(equipment_data, dict):
-                raise CustomAPIException("El cuerpo debe ser un objeto JSON", 400)
+            equipment_data, images, channel, external_transaction_id = self._read_material_multipart()
 
             product = equipment_data.get("product")
             if not isinstance(product, str) or not product.strip():
@@ -583,22 +603,82 @@ class TechnicalView(MethodView):
 
             start_time = default_timer()
             internal_transaction_id = str(generate_internal_transaction_id())
-            external_transaction_id = request.headers.get("externalTransactionId")
             internal_process = (internal_transaction_id, external_transaction_id)
             response["internal_transaction_id"] = internal_transaction_id
             response["external_transaction_id"] = external_transaction_id
             logger.info(
-                f"start request: {function_name}, channel: {request.headers.get('channel')}",
+                f"start request: {function_name}, channel: {channel}",
                 internal=internal_transaction_id,
                 external=external_transaction_id,
             )
 
             self.technical_use_case.post_tech_material(
-                equipment_data, internal_transaction_id, external_transaction_id
+                equipment_data, images, internal_transaction_id, external_transaction_id
             )
             response["error_code"] = 0
             response["message"] = "Equipo técnico guardado correctamente"
             # response["data"] = result
+            end_time = default_timer()
+            logger.info(
+                f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+            status_code = 200
+        except Exception as ex:
+            response, status_code = CustomAPIException.check_exception(
+                ex, function_name, internal_process
+            )
+
+        return response, status_code
+
+    def put_tech_material(self, id_equipment):
+        internal_process = (None, None)
+        function_name = "put_tech_material"
+        response = {}
+        status_code = 500
+        try:
+            equipment_data, images, channel, external_transaction_id = self._read_material_multipart()
+
+            if "product" in equipment_data:
+                product = equipment_data.get("product")
+                if not isinstance(product, str) or not product.strip():
+                    raise CustomAPIException("El campo product no puede estar vacío", 400)
+                equipment_data["product"] = product.strip()
+
+            delete_images = equipment_data.get("delete_images", [])
+            if not isinstance(delete_images, list) or not all(
+                isinstance(image_id, int) for image_id in delete_images
+            ):
+                raise CustomAPIException("delete_images debe ser una lista de ids", 400)
+
+            allowed_fields = {
+                "code", "product", "unit", "model", "base_price",
+                "profit_margin", "profit_margin_dollar", "price", "provider",
+                "description", "stock", "updated_by", "provider_id", "delete_images"
+            }
+            invalid_fields = set(equipment_data) - allowed_fields
+            if invalid_fields:
+                raise CustomAPIException(
+                    f"Campos no permitidos: {', '.join(sorted(invalid_fields))}", 400
+                )
+
+            start_time = default_timer()
+            internal_transaction_id = str(generate_internal_transaction_id())
+            internal_process = (internal_transaction_id, external_transaction_id)
+            response["internal_transaction_id"] = internal_transaction_id
+            response["external_transaction_id"] = external_transaction_id
+            logger.info(
+                f"start request: {function_name}, channel: {channel}",
+                internal=internal_transaction_id,
+                external=external_transaction_id,
+            )
+
+            self.technical_use_case.put_tech_material(
+                id_equipment, equipment_data, images, internal_transaction_id, external_transaction_id
+            )
+            response["error_code"] = 0
+            response["message"] = "Material actualizado correctamente"
             end_time = default_timer()
             logger.info(
                 f"Fin de la transacción, procesada en : {end_time - start_time} milisegundos",

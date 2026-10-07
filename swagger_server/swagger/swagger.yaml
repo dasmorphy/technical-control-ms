@@ -945,22 +945,28 @@ paths:
       tags:
       - Catalogs
       summary: Guarda un equipo o material técnico
-      description: Crea un registro en TechnicalEquipment. Solo product es obligatorio.
+      description: >
+        Crea un registro en TechnicalEquipment y guarda sus imágenes en equipment_images.
+        Se envía como multipart/form-data con el campo data (JSON de TechnicalEquipmentData,
+        más channel y external_transaction_id) y el campo images (archivos, máximo 10).
+        Solo product es obligatorio.
       operationId: post_tech_material
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               properties:
                 data:
-                  $ref: "#/components/schemas/TechnicalEquipmentData"
-                channel:
                   type: string
-                  example: Tech control
-                externalTransactionId:
-                  type: string
-                  example: fcea920f7412b5da7be0cf42b8c93759
+                  format: binary
+                  description: JSON (application/json) con la estructura de TechnicalEquipmentData
+                images:
+                  nullable: true
+                  type: array
+                  items:
+                    type: string
+                    format: binary
       responses:
         "200":
           description: Equipo o material creado correctamente
@@ -970,6 +976,65 @@ paths:
                 $ref: "#/components/schemas/GenericResponse"
         "400":
           description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /tech-materials/{id_equipment}:
+    put:
+      tags:
+      - Catalogs
+      summary: Actualiza un equipo o material técnico
+      description: >
+        Actualiza los campos enviados de TechnicalEquipment y sus imágenes.
+        Se envía como multipart/form-data con el campo data (JSON con los campos a actualizar,
+        updated_by, delete_images con los id_image a eliminar, channel y external_transaction_id)
+        y el campo images con las imágenes nuevas. Máximo 10 imágenes por material.
+      operationId: put_tech_material
+      parameters:
+        - name: id_equipment
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 2
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                data:
+                  type: string
+                  format: binary
+                  description: JSON (application/json) con los campos a actualizar y delete_images
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        "200":
+          description: Material actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Material no encontrado
           content:
             application/json:
               schema:

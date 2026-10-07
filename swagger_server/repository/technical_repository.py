@@ -1,9 +1,12 @@
 from datetime import datetime
+import getpass
 import os
+from uuid import uuid4
 
 from loguru import logger
 import requests
 from sqlalchemy.orm import aliased
+from werkzeug.utils import secure_filename
 
 from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.auditing_data import AuditingData
@@ -16,6 +19,7 @@ from swagger_server.models.db.auditing_sections import AuditingSections
 from swagger_server.models.db.auditing_signatures_img import AuditingSignaturesImg
 from swagger_server.models.db.client import Client
 from swagger_server.models.db.client_projects import ClientProject
+from swagger_server.models.db.equipment_images import EquipmentImages
 from swagger_server.models.db.history_status_project import HistoryStatusProject
 from swagger_server.models.db.inspection_technical import InspectionTechnical
 from swagger_server.models.db.level_gasoline import LevelGasoline
@@ -772,6 +776,45 @@ class TechnicalRepository:
 
             finally:
                 session.close()
+
+
+    def save_image_local(self, file, name_folder="products"):
+        folder = f"/var/www/uploads/{name_folder}"
+        ALLOWED_EXTENSIONS = {"webp"}
+        MAX_FILENAME_LEN = 255
+        MAX_BASENAME_LEN = 50
+
+        if not file or file.filename == "":
+            raise ValueError("Archivo inválido")
+
+        if not os.path.exists(folder):
+            raise CustomAPIException(f"La carpeta root de imágenes no existe {getpass.getuser()} - {os.getuid()} - {os.geteuid()}", 404)
+        
+
+        if not os.access(folder, os.W_OK):
+            raise CustomAPIException(f"No hay permisos de escritura en la carpeta de imágenes {getpass.getuser()} - {os.getuid()} - {os.geteuid()}", 400)
+        
+        # ext = file.filename.rsplit(".", 1)[-1].lower()
+
+        # if ext not in ALLOWED_EXTENSIONS:
+        #     raise ValueError("Formato no permitido. Solo se acepta WEBP.")
+
+        original_name = secure_filename(file.filename)
+        base_name, extension = os.path.splitext(original_name)
+        base_name = base_name[:MAX_BASENAME_LEN]
+
+        # Se conserva la extensión original del archivo enviado
+        filename = f"{uuid4()}_{base_name}{extension}"
+
+        if len(filename.encode("utf-8")) > MAX_FILENAME_LEN:
+            filename = f"{uuid4().hex}{extension}"
+
+        path = os.path.join(folder, filename)
+        file.save(path)
+
+        return {
+            "url": f"/uploads/{name_folder}/{filename}"
+        }
 
 
     def save_images(self, images, name_folder: str = "technical"):
@@ -1618,52 +1661,66 @@ class TechnicalRepository:
 
 
     def get_tech_materials(self, internal, external):
-            with self.db.session_factory() as session:
-                try:
-                    query_stmt = select(
-                        TechnicalEquipment, 
-                        ProvidersProducts.provider
-                    ).outerjoin(
-                        ProvidersProducts, 
-                        TechnicalEquipment.provider_id == ProvidersProducts.id_provider
-                    ).order_by(
-                        TechnicalEquipment.product.asc()
-                    )
-                    rows = session.execute(query_stmt).all()
-    
-                    data = [
-                        {
-                            "id_equipment": record.id_equipment,
-                            "code": record.code,
-                            "product": record.product,
-                            "unit": record.unit,
-                            "model": record.model,
-                            "base_price": record.base_price,
-                            "profit_margin": record.profit_margin,
-                            "profit_margin_dollar": record.profit_margin_dollar,
-                            "price": record.price,
-                            "provider": provider,
-                            "provider_id": record.provider_id,
-                            "description": record.description,
-                            "stock": record.stock,
-                            "created_by": record.created_by,
-                            "updated_by": record.updated_by,
-                            "created_at": record.created_at,
-                            "updated_at": record.updated_at
-                        }
-                        for record, provider in rows
-                    ]
-    
-                    return data
-                
-                except Exception as exception:
-                    logger.error('Error: {}', str(exception), internal=internal, external=external)
-                    if isinstance(exception, CustomAPIException):
-                        raise exception
-                    
-                    raise CustomAPIException("Error al obtener en la base de datos", 500)
+        with self.db.session_factory() as session:
+            try:
+                query_stmt = select(
+                    TechnicalEquipment, 
+                    ProvidersProducts.provider
+                ).outerjoin(
+                    ProvidersProducts, 
+                    TechnicalEquipment.provider_id == ProvidersProducts.id_provider
+                ).order_by(
+                    TechnicalEquipment.product.asc()
+                )
+                rows = session.execute(query_stmt).all()
 
-    def post_tech_material(self, data, internal, external):
+                images_by_equipment = {}
+                for image in session.execute(
+                    select(EquipmentImages).order_by(EquipmentImages.id_image.asc())
+                ).scalars().all():
+                    images_by_equipment.setdefault(image.equipment_tech_id, []).append(
+                        {"image_path": image.image_path}
+                    )
+
+                data = [
+                    {
+                        "id_equipment": record.id_equipment,
+                        "code": record.code,
+                        "product": record.product,
+                        "unit": record.unit,
+                        "model": record.model,
+                        "base_price": record.base_price,
+                        "profit_margin": record.profit_margin,
+                        "profit_margin_dollar": record.profit_margin_dollar,
+                        "price": record.price,
+                        "provider": provider,
+                        "provider_id": record.provider_id,
+                        "description": record.description,
+                        "stock": record.stock,
+                        "created_by": record.created_by,
+                        "updated_by": record.updated_by,
+                        "created_at": record.created_at,
+                        "updated_at": record.updated_at,
+                        "images": images_by_equipment.get(record.id_equipment, []),
+                    }
+                    for record, provider in rows
+                ]
+
+                return data
+            
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+    def post_tech_material(self, data, images, internal, external):
+        saved_files = []
+
+        if images and len(images) > 10:
+            raise CustomAPIException("Máximo 10 imágenes", 400)
+
         with self.db.session_factory() as session:
             try:
                 equipment_values = {
@@ -1677,16 +1734,109 @@ class TechnicalRepository:
                     if field in data
                 }
                 equipment = TechnicalEquipment(**equipment_values)
-                equipment.updated_by = data["created_by"]
+                equipment.updated_by = data.get("created_by")
                 session.add(equipment)
                 session.flush()
+
+                for image in images or []:
+                    result = self.save_image_local(image)
+                    saved_files.append(result["url"])
+                    session.add(
+                        EquipmentImages(
+                            equipment_tech_id=equipment.id_equipment,
+                            image_path=result["url"],
+                        )
+                    )
+
                 session.commit()
             except Exception as exception:
                 session.rollback()
+
+                # Limpia los archivos guardados si falla la base de datos
+                for path in saved_files:
+                    full_path = os.path.join("/var/www", path.lstrip("/"))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+
                 logger.error('Error: {}', str(exception), internal=internal, external=external)
                 if isinstance(exception, CustomAPIException):
                     raise exception
                 raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+    def put_tech_material(self, id_equipment, data, images, internal, external):
+        saved_files = []
+        removed_files = []
+        images = images or []
+        delete_ids = {int(image_id) for image_id in (data.get("delete_images") or [])}
+
+        with self.db.session_factory() as session:
+            try:
+                equipment = session.get(TechnicalEquipment, id_equipment)
+                if equipment is None:
+                    raise CustomAPIException("Material no encontrado", 404)
+
+                for field in (
+                    "code", "product", "unit", "model", "base_price",
+                    "profit_margin", "profit_margin_dollar", "price",
+                    "provider", "description", "stock", "provider_id"
+                ):
+                    if field in data:
+                        setattr(equipment, field, data[field])
+                equipment.updated_by = data.get("updated_by", equipment.updated_by)
+
+                current_images = session.execute(
+                    select(EquipmentImages).where(
+                        EquipmentImages.equipment_tech_id == id_equipment
+                    )
+                ).scalars().all()
+
+                # Solo se eliminan imágenes que pertenecen a este material
+                to_delete = [image for image in current_images if image.id_image in delete_ids]
+                if len(current_images) - len(to_delete) + len(images) > 10:
+                    raise CustomAPIException("Máximo 10 imágenes por material", 400)
+
+                for image in to_delete:
+                    removed_files.append(image.image_path)
+                    session.delete(image)
+
+                for image in images:
+                    result = self.save_image_local(image)
+                    saved_files.append(result["url"])
+                    session.add(
+                        EquipmentImages(
+                            equipment_tech_id=id_equipment,
+                            image_path=result["url"],
+                        )
+                    )
+
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+
+                # Limpia los archivos nuevos si falla la base de datos
+                for path in saved_files:
+                    full_path = os.path.join("/var/www", path.lstrip("/"))
+                    if os.path.exists(full_path):
+                        os.remove(full_path)
+
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+                raise CustomAPIException("Error al actualizar en la base de datos", 500)
+
+        # Los archivos eliminados se borran del disco solo después del commit
+        for path in removed_files:
+            full_path = os.path.join("/var/www", (path or "").lstrip("/"))
+            try:
+                if path and os.path.exists(full_path):
+                    os.remove(full_path)
+            except OSError as exception:
+                logger.warning(
+                    "No se pudo eliminar la imagen del material: {}",
+                    str(exception),
+                    internal=internal,
+                    external=external,
+                )
 
 
     def get_auditing_sections(self, internal, external):
