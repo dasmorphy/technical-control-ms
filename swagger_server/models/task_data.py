@@ -1,7 +1,6 @@
 # coding: utf-8
 
 from __future__ import absolute_import
-from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
 
@@ -14,7 +13,7 @@ class TaskData(Model):
 
     Do not edit the class manually.
     """
-    def __init__(self, location_id: int=None, name: str=None, description: str=None, responsible: str=None, inspection_id: int=None, start_date: datetime=None, end_date: datetime=None, assigned_technicians: List[str]=None, is_support: bool=None, user: str=None):  # noqa: E501
+    def __init__(self, location_id: int=None, name: str=None, description: str=None, responsible: str=None, inspection_id: int=None, start_date: object=None, end_date: object=None, assigned_technicians: List[str]=None, is_support: bool=None, user: str=None):  # noqa: E501
         """TaskData - a model defined in Swagger
 
         :param location_id: The location_id of this TaskData.  # noqa: E501
@@ -28,9 +27,9 @@ class TaskData(Model):
         :param inspection_id: The inspection_id of this TaskData.  # noqa: E501
         :type inspection_id: int
         :param start_date: The start_date of this TaskData.  # noqa: E501
-        :type start_date: datetime
+        :type start_date: object
         :param end_date: The end_date of this TaskData.  # noqa: E501
-        :type end_date: datetime
+        :type end_date: object
         :param assigned_technicians: The assigned_technicians of this TaskData.  # noqa: E501
         :type assigned_technicians: List[str]
         :param is_support: The is_support of this TaskData.  # noqa: E501
@@ -44,8 +43,8 @@ class TaskData(Model):
             'description': str,
             'responsible': str,
             'inspection_id': int,
-            'start_date': datetime,
-            'end_date': datetime,
+            'start_date': object,
+            'end_date': object,
             'assigned_technicians': List[str],
             'is_support': bool,
             'user': str
@@ -191,43 +190,43 @@ class TaskData(Model):
         self._inspection_id = inspection_id
 
     @property
-    def start_date(self) -> datetime:
+    def start_date(self) -> object:
         """Gets the start_date of this TaskData.
 
 
         :return: The start_date of this TaskData.
-        :rtype: datetime
+        :rtype: object
         """
         return self._start_date
 
     @start_date.setter
-    def start_date(self, start_date: datetime):
+    def start_date(self, start_date: object):
         """Sets the start_date of this TaskData.
 
 
         :param start_date: The start_date of this TaskData.
-        :type start_date: datetime
+        :type start_date: object
         """
 
         self._start_date = start_date
 
     @property
-    def end_date(self) -> datetime:
+    def end_date(self) -> object:
         """Gets the end_date of this TaskData.
 
 
         :return: The end_date of this TaskData.
-        :rtype: datetime
+        :rtype: object
         """
         return self._end_date
 
     @end_date.setter
-    def end_date(self, end_date: datetime):
+    def end_date(self, end_date: object):
         """Sets the end_date of this TaskData.
 
 
         :param end_date: The end_date of this TaskData.
-        :type end_date: datetime
+        :type end_date: object
         """
 
         self._end_date = end_date

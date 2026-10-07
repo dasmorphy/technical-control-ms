@@ -1002,6 +1002,7 @@ class TechnicalRepository:
                     .subquery()
                 )
 
+                responsible_user = aliased(Users)
 
                 query_stmt = (
                     select(
@@ -1010,7 +1011,8 @@ class TechnicalRepository:
                         Client,
                         tech_record_subq.c.record_technical,
                         Users.user,
-                        tech_assignments_subq.c.technicals_assignments
+                        tech_assignments_subq.c.technicals_assignments,
+                        responsible_user.attributes["fullname"].label("name_responsible")
                     )
                     .outerjoin(
                         TaskLocation,
@@ -1035,6 +1037,10 @@ class TechnicalRepository:
                     .outerjoin(
                         Users,
                         cast(Users.id_user, String) == TaskTechnical.requested_by
+                    )
+                    .outerjoin(
+                        responsible_user,
+                        responsible_user.user == TaskTechnical.responsible
                     )
                     .order_by(TaskTechnical.created_at.desc())
                 )
@@ -1094,6 +1100,7 @@ class TechnicalRepository:
                         "is_support": task.is_support,
                         "start_date": task.start_date,
                         "responsible": task.responsible,
+                        "name_responsible": name_responsible,
                         "end_date": task.end_date,
                         "record_technical": record_technical or None,
                         "technicals_assignments": assignments or None,
@@ -1102,7 +1109,7 @@ class TechnicalRepository:
                         "created_at": task.created_at,
                         "updated_at": task.updated_at
                     }
-                    for task, location, client, record_technical, user, assignments in rows
+                    for task, location, client, record_technical, user, assignments, name_responsible in rows
                 ]
 
                 return data
