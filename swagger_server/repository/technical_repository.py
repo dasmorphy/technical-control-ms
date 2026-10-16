@@ -1096,6 +1096,7 @@ class TechnicalRepository:
                         "location_id": location.id_location if location else None,
                         "location": location.name if location else None,
                         "code": task.code,
+                        "inspection_id": task.inspection_id,
                         "status": task.status,
                         "is_support": task.is_support,
                         "start_date": task.start_date,

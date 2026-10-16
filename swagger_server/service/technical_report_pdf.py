@@ -138,7 +138,7 @@ class TechnicalReportPdf:
             ("Cliente:", record.get("client_name")),
             ("Ubicación del Proyecto:", record.get("location_name")),
             ("Fecha de Instalación:", cls._format_date(record.get("created_at"))),
-            ("Técnico Responsable:", staff or None),
+            ("Personal Técnico:", staff or None),
             ("Vehículo:", record.get("vehicle")),
             ("Estado:", record.get("status")),
             ("Código de tarea:", record.get("task_code")),

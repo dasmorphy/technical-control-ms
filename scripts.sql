@@ -1441,3 +1441,52 @@ ALTER TABLE IF EXISTS technical.task_technical
 
 ALTER TABLE IF EXISTS technical.task_technical
     ADD COLUMN responsible text;
+
+------------------------------------------------------------------------------------------------------------------------------
+
+CREATE TABLE technical.client_companies
+(
+    id_company integer NOT NULL,
+    company_name text,
+    type_document text,
+    identity text,
+    created_at timestamp without time zone DEFAULT now(),
+    created_by text,
+    PRIMARY KEY (id_company)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS technical.client_companies
+    OWNER to telearseg;
+
+
+CREATE SEQUENCE technical.client_companies_id_seq
+    INCREMENT 1
+    START 1
+    MINVALUE 1
+    MAXVALUE 2147483647
+    CACHE 1;
+
+ALTER SEQUENCE technical.client_companies_id_seq
+    OWNED BY technical.client_companies.id_company;
+
+ALTER SEQUENCE technical.client_companies_id_seq
+    OWNER TO nextgen;
+
+ALTER TABLE IF EXISTS technical.client_companies
+    ALTER COLUMN id_company SET DEFAULT nextval('technical.client_companies_id_seq'::regclass);
+    
+
+----------------------------------------------------------------------------------------------------------
+
+
+ALTER TABLE IF EXISTS technical.clients
+    ADD COLUMN client_company_id integer;
+ALTER TABLE IF EXISTS technical.clients
+    ADD CONSTRAINT company_fkey FOREIGN KEY (client_company_id)
+    REFERENCES technical.client_companies (id_company) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS fki_company_fkey
+    ON technical.clients(client_company_id);
