@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    UUID,
     Column,
     Boolean,
     ForeignKey,
@@ -30,6 +31,10 @@ class TechStaffRecord(Base):
     tech_staff_id = Column(
         Integer,
         ForeignKey("technical.technical_staff.id_technical")
+    )
+
+    user_tech_id = Column(
+        UUID(as_uuid=True),
     )
 
     created_at = Column(

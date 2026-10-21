@@ -988,7 +988,7 @@ class TechnicalRepository:
                             func.json_build_object(
                                 "id_assignment", TaskTechnicalAssignment.id_assignment,
                                 "task_id", TaskTechnicalAssignment.task_id,
-                                "user_tech_id", TaskTechnicalAssignment.user,
+                                "user_tech_id", Users.id_user,
                                 "user", Users.user,
                                 "fullname_user", Users.attributes["fullname"]
                             ),                            
