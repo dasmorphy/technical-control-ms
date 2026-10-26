@@ -380,7 +380,7 @@ class TechnicalRepository:
                 for tech_staff_id in data.get('technical_staff'):
                     tech_staff_record = TechStaffRecord(
                         record_id=record_technical_id,
-                        tech_staff_id=tech_staff_id
+                        user_tech_id=tech_staff_id
                     )
                     session.add(tech_staff_record)
 
@@ -485,7 +485,7 @@ class TechnicalRepository:
                         session.add(
                             TechStaffRecord(
                                 record_id=id_record,
-                                tech_staff_id=tech_staff_id,
+                                user_tech_id=tech_staff_id,
                             )
                         )
 
@@ -1241,18 +1241,21 @@ class TechnicalRepository:
                         TechStaffRecord.record_id.label("record_id"),
                         func.json_agg(
                             func.json_build_object(
-                                "id_technical", TechnicalStaff.id_technical,
-                                "name", TechnicalStaff.name,
+                                "name", Users.attributes["fullname"],
+                                "user_tech_id", Users.id_user,
+                                "user", Users.user  
                             )
                         ).label("technical_staff")
                     )
-                    .join(
-                        TechnicalStaff,
-                        TechnicalStaff.id_technical == TechStaffRecord.tech_staff_id
+                    .outerjoin(
+                        Users,
+                        Users.id_user == TechStaffRecord.user_tech_id
                     )
                     .group_by(TechStaffRecord.record_id)
                     .subquery()
                 )
+
+                responsible_user = aliased(Users)
 
                 # ============================
                 # CONSULTA PRINCIPAL
@@ -1268,7 +1271,8 @@ class TechnicalRepository:
                         func.coalesce(
                             images_subq.c.images,
                             []
-                        ).label("images")
+                        ).label("images"),
+                        responsible_user.attributes["fullname"].label("name_responsible")
                     )
                     .outerjoin(
                         TaskTechnical,
@@ -1293,6 +1297,10 @@ class TechnicalRepository:
                     .outerjoin(
                         images_subq,
                         images_subq.c.record_id == TechnicalRecord.id_record
+                    )
+                    .outerjoin(
+                        responsible_user,
+                        responsible_user.user == TaskTechnical.responsible
                     )
                     .order_by(
                         TechnicalRecord.created_at.desc()
@@ -1343,6 +1351,7 @@ class TechnicalRepository:
                         "client_id": client.id_client if client else None,
                         "location_id": location.id_location if location else None,
                         "location_name": location.name if location else None,
+                        "name_responsible": name_responsible,
                         "task_code": task.code if task else None,
                         "task_id": task.id_task if task else None,
                         "name_project": task.name if task else None,
@@ -1363,7 +1372,8 @@ class TechnicalRepository:
                         location,
                         materials,
                         technical_staff,
-                        images
+                        images,
+                        name_responsible
                     ) in rows
                 ]
 
