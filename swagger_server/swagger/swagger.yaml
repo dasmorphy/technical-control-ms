@@ -162,6 +162,125 @@ paths:
               schema:
                 $ref: "#/components/schemas/ResponseError"
       x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+    post:
+      tags:
+      - Clients
+      summary: Registra un cliente nuevo
+      description: >
+        Crea el cliente asociado a una empresa existente (client_company_id) o crea la empresa
+        en la misma transacción (client_company). Se debe enviar solo uno de los dos.
+      operationId: post_client
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                data:
+                  type: object
+                  required:
+                    - name
+                    - user
+                  properties:
+                    name:
+                      type: string
+                      example: "EXPALSA"
+                    client_company_id:
+                      type: integer
+                      nullable: true
+                      example: 1
+                    client_company:
+                      type: object
+                      nullable: true
+                      required:
+                        - company_name
+                        - type_document
+                        - identity
+                      properties:
+                        company_name:
+                          type: string
+                          example: "EXPALSA S.A."
+                        type_document:
+                          type: string
+                          enum: ["Natural", "Jurídica"]
+                          example: "Jurídica"
+                        identity:
+                          type: string
+                          example: "0990000000001"
+                    user:
+                      type: string
+                      example: "dmales"
+                channel:
+                  type: string
+                  example: TLSG_WEB
+                externalTransactionId:
+                  type: string
+                  example: fcea920f7412b5da7be0cf42b8c93759
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
+  /client-companies:
+    get:
+      tags:
+      - Clients
+      summary: Obtiene todas las empresas de los clientes
+      description: Devuelve las empresas (razón social) disponibles para asociar a un cliente
+      operationId: get_client_companies
+      parameters:
+        - name: externalTransactionId
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "fcea920f7412b5da7be0cf42b8c93759"
+        - name: channel
+          in: header
+          required: true
+          schema:
+            type: string
+            example: "TECHNICAL_MOVIL"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseError"
+      x-openapi-router-controller: swagger_server.controllers.technical_controller.TechnicalView
   /location:
     get:
       tags:

@@ -18,6 +18,7 @@ from swagger_server.models.db.auditing_response import AuditingResponse
 from swagger_server.models.db.auditing_sections import AuditingSections
 from swagger_server.models.db.auditing_signatures_img import AuditingSignaturesImg
 from swagger_server.models.db.client import Client
+from swagger_server.models.db.client_companies import ClientCompany
 from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.equipment_images import EquipmentImages
 from swagger_server.models.db.history_status_project import HistoryStatusProject
@@ -873,28 +874,121 @@ class TechnicalRepository:
     def get_clients(self, internal, external):
         with self.db.session_factory() as session:
             try:
+                # outer join: hay clientes antiguos sin empresa asociada
                 result = session.execute(
-                    select(Client)
+                    select(Client, ClientCompany)
+                    .outerjoin(ClientCompany, ClientCompany.id_company == Client.client_company_id)
+                    .order_by(Client.name)
                 )
-                drivers = [
+                clients = [
                     {
                         "id_client": c.id_client,
                         "name": c.name,
+                        "client_company_id": c.client_company_id,
+                        "client_company": self._client_company_to_dict(company),
                         "created_by": c.created_by,
                         "updated_by": c.updated_by,
                         "created_at": c.created_at,
                         "updated_at": c.updated_at
                     }
-                    for c in result.scalars().all()
+                    for c, company in result.all()
                 ]
-                return drivers
+                return clients
             except Exception as exception:
                 logger.error('Error: {}', str(exception), internal=internal, external=external)
                 if isinstance(exception, CustomAPIException):
                     raise exception
-                
+
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
-            
+
+    @staticmethod
+    def _client_company_to_dict(company):
+        if company is None:
+            return None
+        return {
+            "id_company": company.id_company,
+            "company_name": company.company_name,
+            "type_document": company.type_document,
+            "identity": company.identity,
+            "created_by": company.created_by,
+            "created_at": company.created_at
+        }
+
+    def get_client_companies(self, internal, external):
+        with self.db.session_factory() as session:
+            try:
+                result = session.execute(
+                    select(ClientCompany).order_by(ClientCompany.company_name)
+                )
+                return [self._client_company_to_dict(c) for c in result.scalars().all()]
+            except Exception as exception:
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al obtener en la base de datos", 500)
+
+    def post_client(self, data, internal, external):
+        # Empresa y cliente se guardan en una sola transacción para no dejar empresas huérfanas
+        with self.db.session_factory() as session:
+            try:
+                new_company = data.get("client_company")
+                if new_company:
+                    duplicated = session.execute(
+                        select(ClientCompany.id_company)
+                        .where(func.trim(ClientCompany.identity) == new_company["identity"])
+                    ).first()
+                    if duplicated:
+                        raise CustomAPIException(
+                            f"Ya existe una empresa registrada con la identificación {new_company['identity']}",
+                            409
+                        )
+
+                    company = ClientCompany(
+                        company_name=new_company["company_name"],
+                        type_document=new_company["type_document"],
+                        identity=new_company["identity"],
+                        created_by=data.get("user")
+                    )
+                    session.add(company)
+                    session.flush()
+                else:
+                    company = session.get(ClientCompany, data.get("client_company_id"))
+                    if not company:
+                        raise CustomAPIException("No existe la empresa seleccionada", 404)
+
+                duplicated_client = session.execute(
+                    select(Client.id_client).where(
+                        Client.client_company_id == company.id_company,
+                        func.lower(func.trim(Client.name)) == data["name"].lower()
+                    )
+                ).first()
+                if duplicated_client:
+                    raise CustomAPIException("La empresa ya tiene un cliente registrado con ese nombre", 409)
+
+                new_client = Client(
+                    name=data["name"],
+                    client_company_id=company.id_company,
+                    created_by=data.get("user"),
+                    updated_by=data.get("user")
+                )
+                session.add(new_client)
+                session.commit()
+
+                return {
+                    "id_client": new_client.id_client,
+                    "name": new_client.name,
+                    "client_company_id": company.id_company,
+                    "client_company": self._client_company_to_dict(company)
+                }
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al insertar en la base de datos", 500)
+
 
     def get_location(self, filters, internal, external):
         with self.db.session_factory() as session:

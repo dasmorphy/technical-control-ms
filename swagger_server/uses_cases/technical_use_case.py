@@ -1,3 +1,4 @@
+from swagger_server.exception.custom_error_exception import CustomAPIException
 from swagger_server.models.db.movilization_control import MovilizationControl
 from swagger_server.models.db.task_technical import TaskTechnical
 from swagger_server.models.task_data import TaskData
@@ -86,7 +87,37 @@ class TechnicalUseCase:
     
     def get_clients(self, internal, external):
         return self.technical_control_repository.get_clients(internal, external)
-    
+
+    def get_client_companies(self, internal, external):
+        return self.technical_control_repository.get_client_companies(internal, external)
+
+    def post_client(self, data, internal, external):
+        name = (data.get("name") or "").strip()
+        if not name:
+            raise CustomAPIException("El nombre del cliente es obligatorio", 400)
+
+        # Se asocia a una empresa existente o se crea una nueva, nunca ambas
+        company_id = data.get("client_company_id")
+        new_company = data.get("client_company")
+        if bool(company_id) == bool(new_company):
+            raise CustomAPIException("Debe seleccionar una empresa existente o registrar una nueva", 400)
+
+        if new_company:
+            new_company = {
+                key: (new_company.get(key) or "").strip()
+                for key in ("company_name", "type_document", "identity")
+            }
+            if not all(new_company.values()):
+                raise CustomAPIException("La razón social, el tipo de documento y la identificación son obligatorios", 400)
+            if new_company["type_document"] not in ("Natural", "Jurídica"):
+                raise CustomAPIException("El tipo de documento debe ser Natural o Jurídica", 400)
+
+        return self.technical_control_repository.post_client(
+            {"name": name, "client_company_id": company_id, "client_company": new_company, "user": data.get("user")},
+            internal,
+            external
+        )
+
     def get_location(self, params, internal, external):
         clients = params.get("client_id")
 
