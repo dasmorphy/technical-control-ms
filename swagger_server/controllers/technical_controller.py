@@ -648,7 +648,7 @@ class TechnicalView(MethodView):
             equipment_data["product"] = product.strip()
 
             allowed_fields = {
-                "code", "product", "unit", "model", "base_price",
+                "code", "product", "unit", "model", "base_price", "type",
                 "profit_margin", "profit_margin_dollar", "price", "provider",
                 "description", "stock", "created_by", "created_at", "provider_id"
             }
@@ -710,7 +710,7 @@ class TechnicalView(MethodView):
                 raise CustomAPIException("delete_images debe ser una lista de ids", 400)
 
             allowed_fields = {
-                "code", "product", "unit", "model", "base_price",
+                "code", "product", "unit", "model", "base_price", "type",
                 "profit_margin", "profit_margin_dollar", "price", "provider",
                 "description", "stock", "updated_by", "provider_id", "delete_images"
             }

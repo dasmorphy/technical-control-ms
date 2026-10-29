@@ -1117,6 +1117,7 @@ CREATE TABLE IF NOT EXISTS technical.technical_equipment
     code text COLLATE pg_catalog."default",
     product text COLLATE pg_catalog."default",
     unit text COLLATE pg_catalog."default",
+    type text COLLATE pg_catalog."default",
     base_price numeric(12,2),
     profit_margin numeric(12,2),
     profit_margin_dollar numeric(12,2),

@@ -1808,6 +1808,7 @@ class TechnicalRepository:
                         "unit": record.unit,
                         "model": record.model,
                         "base_price": record.base_price,
+                        "type": record.type,
                         "profit_margin": record.profit_margin,
                         "profit_margin_dollar": record.profit_margin_dollar,
                         "price": record.price,
@@ -1847,7 +1848,7 @@ class TechnicalRepository:
                         "code", "product", "unit", "model", "base_price",
                         "profit_margin", "profit_margin_dollar", "price",
                         "provider", "description", "stock", "created_by",
-                        "provider_id"
+                        "provider_id", "type"
                     )
                     if field in data
                 }
@@ -1896,7 +1897,8 @@ class TechnicalRepository:
                 for field in (
                     "code", "product", "unit", "model", "base_price",
                     "profit_margin", "profit_margin_dollar", "price",
-                    "provider", "description", "stock", "provider_id"
+                    "provider", "description", "stock", "provider_id",
+                    "type"
                 ):
                     if field in data:
                         setattr(equipment, field, data[field])

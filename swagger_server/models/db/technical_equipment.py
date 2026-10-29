@@ -32,6 +32,7 @@ class TechnicalEquipment(Base):
     product = Column(Text)
     unit = Column(Text)
     model = Column(Text)
+    type = Column(Text)
 
     base_price = Column(Numeric(12, 2))
     profit_margin = Column(Numeric(12, 2))
