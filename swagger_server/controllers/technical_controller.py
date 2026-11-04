@@ -634,6 +634,20 @@ class TechnicalView(MethodView):
         )
         return equipment_data, request.files.getlist("images"), channel, external_transaction_id
 
+
+    def _validate_provider_ids(self, equipment_data):
+        if "provider_ids" not in equipment_data:
+            return
+
+        provider_ids = equipment_data["provider_ids"]
+        if not isinstance(provider_ids, list) or not all(
+            isinstance(provider_id, int) and not isinstance(provider_id, bool)
+            for provider_id in provider_ids
+        ):
+            raise CustomAPIException("provider_ids debe ser una lista de ids", 400)
+
+    
+
     def post_tech_material(self):
         internal_process = (None, None)
         function_name = "post_tech_material"
@@ -647,10 +661,13 @@ class TechnicalView(MethodView):
                 raise CustomAPIException("El campo product es obligatorio", 400)
             equipment_data["product"] = product.strip()
 
+            self._validate_provider_ids(equipment_data)
+
             allowed_fields = {
                 "code", "product", "unit", "model", "base_price", "type",
                 "profit_margin", "profit_margin_dollar", "price", "provider",
-                "description", "stock", "created_by", "created_at", "provider_id"
+                "description", "stock", "created_by", "created_at", "provider_id",
+                "provider_ids"
             }
             invalid_fields = set(equipment_data) - allowed_fields
             if invalid_fields:
@@ -709,10 +726,12 @@ class TechnicalView(MethodView):
             ):
                 raise CustomAPIException("delete_images debe ser una lista de ids", 400)
 
+            self._validate_provider_ids(equipment_data)
+
             allowed_fields = {
                 "code", "product", "unit", "model", "base_price", "type",
                 "profit_margin", "profit_margin_dollar", "price", "provider",
-                "description", "stock", "updated_by", "provider_id", "delete_images"
+                "description", "stock", "updated_by", "provider_id", "provider_ids", "delete_images"
             }
             invalid_fields = set(equipment_data) - allowed_fields
             if invalid_fields:

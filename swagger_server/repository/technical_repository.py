@@ -40,6 +40,8 @@ from swagger_server.models.db.task_technical_assignments import TaskTechnicalAss
 from swagger_server.models.db.tech_record_image import TechRecordImage
 from swagger_server.models.db.tech_staff_record import TechStaffRecord
 from swagger_server.models.db.technical_equipment import TechnicalEquipment
+from swagger_server.models.db.technical_equipment_provider import TechnicalEquipmentProvider
+
 from swagger_server.models.db.technical_record import TechnicalRecord
 from swagger_server.models.db.technical_staff import TechnicalStaff
 from swagger_server.models.db.users import Users
@@ -1778,19 +1780,60 @@ class TechnicalRepository:
                 session.close()
 
 
+    def _resolve_provider_ids(self, session, data):
+        # provider_id se mantiene por compatibilidad con clientes anteriores
+        if "provider_ids" in data:
+            provider_ids = data["provider_ids"]
+        elif "provider_id" in data:
+            provider_id = data["provider_id"]
+            provider_ids = [] if provider_id is None else [provider_id]
+        else:
+            return None
+
+        provider_ids = list(dict.fromkeys(provider_ids))
+        existing_ids = set(
+            session.execute(
+                select(ProvidersProducts.id_provider)
+                .where(ProvidersProducts.id_provider.in_(provider_ids))
+            ).scalars().all()
+        )
+
+        missing_ids = [
+            str(provider_id) for provider_id in provider_ids
+            if provider_id not in existing_ids
+        ]
+        if missing_ids:
+            raise CustomAPIException(
+                f"Proveedores no encontrados: {', '.join(missing_ids)}", 404
+            )
+
+        return provider_ids
+
+
+
     def get_tech_materials(self, internal, external):
         with self.db.session_factory() as session:
             try:
-                query_stmt = select(
-                    TechnicalEquipment, 
-                    ProvidersProducts.provider
-                ).outerjoin(
-                    ProvidersProducts, 
-                    TechnicalEquipment.provider_id == ProvidersProducts.id_provider
-                ).order_by(
+                query_stmt = select(TechnicalEquipment).order_by(
                     TechnicalEquipment.product.asc()
                 )
-                rows = session.execute(query_stmt).all()
+                rows = session.execute(query_stmt).scalars().all()
+
+                providers_by_equipment = {}
+                for equipment_id, id_provider, provider in session.execute(
+                    select(
+                        TechnicalEquipmentProvider.equipment_id,
+                        ProvidersProducts.id_provider,
+                        ProvidersProducts.provider,
+                    ).join(
+                        ProvidersProducts,
+                        TechnicalEquipmentProvider.provider_id == ProvidersProducts.id_provider,
+                    ).order_by(TechnicalEquipmentProvider.id_equipment_provider.asc())
+                ).all():
+                    providers_by_equipment.setdefault(equipment_id, []).append(
+                        {"id_provider": id_provider, "provider": provider}
+                    )
+
 
                 images_by_equipment = {}
                 for image in session.execute(
@@ -1800,30 +1843,36 @@ class TechnicalRepository:
                         {"id_image": image.id_image, "image_path": image.image_path}
                     )
 
-                data = [
-                    {
-                        "id_equipment": record.id_equipment,
-                        "code": record.code,
-                        "product": record.product,
-                        "unit": record.unit,
-                        "model": record.model,
-                        "base_price": record.base_price,
-                        "type": record.type,
-                        "profit_margin": record.profit_margin,
-                        "profit_margin_dollar": record.profit_margin_dollar,
-                        "price": record.price,
-                        "provider": provider,
-                        "provider_id": record.provider_id,
-                        "description": record.description,
-                        "stock": record.stock,
-                        "created_by": record.created_by,
-                        "updated_by": record.updated_by,
-                        "created_at": record.created_at,
-                        "updated_at": record.updated_at,
-                        "images": images_by_equipment.get(record.id_equipment, []),
-                    }
-                    for record, provider in rows
-                ]
+                data = []
+                for record in rows:
+                    providers = providers_by_equipment.get(record.id_equipment, [])
+                    data.append(
+                        {
+                            "id_equipment": record.id_equipment,
+                            "code": record.code,
+                            "product": record.product,
+                            "unit": record.unit,
+                            "model": record.model,
+                            "base_price": record.base_price,
+                            "type": record.type,
+                            "profit_margin": record.profit_margin,
+                            "profit_margin_dollar": record.profit_margin_dollar,
+                            "price": record.price,
+                            "provider": ", ".join(
+                                item["provider"] for item in providers if item["provider"]
+                            ) or None,
+                            "provider_id": providers[0]["id_provider"] if providers else None,
+                            "providers": providers,
+                            "description": record.description,
+                            "stock": record.stock,
+                            "created_by": record.created_by,
+                            "updated_by": record.updated_by,
+                            "created_at": record.created_at,
+                            "updated_at": record.updated_at,
+                            "images": images_by_equipment.get(record.id_equipment, []),
+                        }
+                    )
+
 
                 return data
             
@@ -1842,13 +1891,15 @@ class TechnicalRepository:
 
         with self.db.session_factory() as session:
             try:
+                provider_ids = self._resolve_provider_ids(session, data) or []
+
                 equipment_values = {
                     field: data[field]
                     for field in (
                         "code", "product", "unit", "model", "base_price",
                         "profit_margin", "profit_margin_dollar", "price",
                         "provider", "description", "stock", "created_by",
-                        "provider_id", "type"
+                        "type"
                     )
                     if field in data
                 }
@@ -1856,6 +1907,15 @@ class TechnicalRepository:
                 equipment.updated_by = data.get("created_by")
                 session.add(equipment)
                 session.flush()
+
+                for provider_id in provider_ids:
+                    session.add(
+                        TechnicalEquipmentProvider(
+                            equipment_id=equipment.id_equipment,
+                            provider_id=provider_id,
+                        )
+                    )
+
 
                 for image in images or []:
                     result = self.save_image_local(image)
@@ -1897,12 +1957,27 @@ class TechnicalRepository:
                 for field in (
                     "code", "product", "unit", "model", "base_price",
                     "profit_margin", "profit_margin_dollar", "price",
-                    "provider", "description", "stock", "provider_id",
-                    "type"
+                    "provider", "description", "stock", "type"
                 ):
                     if field in data:
                         setattr(equipment, field, data[field])
                 equipment.updated_by = data.get("updated_by", equipment.updated_by)
+
+                provider_ids = self._resolve_provider_ids(session, data)
+                if provider_ids is not None:
+                    session.execute(
+                        delete(TechnicalEquipmentProvider).where(
+                            TechnicalEquipmentProvider.equipment_id == id_equipment
+                        )
+                    )
+                    for provider_id in provider_ids:
+                        session.add(
+                            TechnicalEquipmentProvider(
+                                equipment_id=id_equipment,
+                                provider_id=provider_id,
+                            )
+                        )
+
 
                 current_images = session.execute(
                     select(EquipmentImages).where(

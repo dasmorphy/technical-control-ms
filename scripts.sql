@@ -1491,3 +1491,46 @@ ALTER TABLE IF EXISTS technical.clients
     ON DELETE NO ACTION;
 CREATE INDEX IF NOT EXISTS fki_company_fkey
     ON technical.clients(client_company_id);
+
+
+
+
+
+-- NUEVA TABLA PARA PODER ELEGIR VARIOS PROVEDORES
+CREATE TABLE technical.technical_equipment_provider (
+    id_equipment_provider integer NOT NULL,
+    equipment_id integer NOT NULL,
+    provider_id integer NOT NULL,
+    CONSTRAINT technical_equipment_provider_pkey PRIMARY KEY (id_equipment_provider),
+    CONSTRAINT equipment_provider_equipment_fkey FOREIGN KEY (equipment_id)
+        REFERENCES technical.technical_equipment (id_equipment),
+    CONSTRAINT equipment_provider_provider_fkey FOREIGN KEY (provider_id)
+        REFERENCES internal_management.providers_products (id_provider),
+    CONSTRAINT equipment_provider_unique UNIQUE (equipment_id, provider_id)
+);
+
+
+-- Crear la secuencia para la columna id_equipment_provider
+CREATE SEQUENCE technical.technical_equipment_provider_id_seq;
+
+
+-- Asignar la secuencia a la columna id_equipment_provider 
+ALTER SEQUENCE technical.technical_equipment_provider_id_seq
+    OWNED BY technical.technical_equipment_provider.id_equipment_provider;
+
+
+
+-- Asignar la secuencia como valor por defecto para la columna id_equipment_provider 
+ALTER SEQUENCE technical.technical_equipment_provider_id_seq OWNER TO telearseg;
+ALTER TABLE technical.technical_equipment_provider OWNER TO telearseg;
+
+ALTER TABLE technical.technical_equipment_provider
+    ALTER COLUMN id_equipment_provider
+    SET DEFAULT nextval('technical.technical_equipment_provider_id_seq');
+
+-- Carga de los datos existentes
+INSERT INTO technical.technical_equipment_provider (equipment_id, provider_id)
+SELECT id_equipment, provider_id
+FROM technical.technical_equipment
+WHERE provider_id IS NOT NULL
+ON CONFLICT (equipment_id, provider_id) DO NOTHING;

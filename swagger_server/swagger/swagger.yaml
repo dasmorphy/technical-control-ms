@@ -1789,6 +1789,22 @@ components:
           type: number
           nullable: true
           example: 1
+        provider_ids:
+          type: array
+          items:
+            type: integer
+          example: [1, 2]
+        providers:
+          type: array
+          readOnly: true
+          items:
+            type: object
+            properties:
+              id_provider:
+                type: integer
+              provider:
+                type: string
+
         description:
           type: string
           nullable: true
