@@ -17,3 +17,6 @@ services:
         volumes:
             - .:/usr/src/app
             - /var/www/uploads/products:/var/www/uploads/products
+            - /var/www/uploads/technical:/var/www/uploads/technical
+            - /var/www/uploads/findings:/var/www/uploads/findings
+            - /var/www/uploads/signatures:/var/www/uploads/signatures
