@@ -1534,3 +1534,15 @@ SELECT id_equipment, provider_id
 FROM technical.technical_equipment
 WHERE provider_id IS NOT NULL
 ON CONFLICT (equipment_id, provider_id) DO NOTHING;
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+ALTER TABLE IF EXISTS technical.technical_record
+    ADD COLUMN inspection_id integer;
+ALTER TABLE IF EXISTS technical.technical_record
+    ADD CONSTRAINT technical_inspection_fkey FOREIGN KEY (inspection_id)
+    REFERENCES internal_management.inspection_technical (id_inspection) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION;
+CREATE INDEX IF NOT EXISTS fki_technical_inspection_fkey
+    ON technical.technical_record(inspection_id);

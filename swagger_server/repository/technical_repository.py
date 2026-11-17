@@ -389,9 +389,8 @@ class TechnicalRepository:
 
                 # Guardar imágenes (máx. 10) mediante el servicio de archivos.
                 if images:
-                    results = self.save_images(images[:10])
-
-                    for result in results:
+                    for image in images[:10]:
+                        result = self.save_image_local(image, "technical")
                         saved_files.append(result["url"])
                         session.add(
                             TechRecordImage(
@@ -504,9 +503,8 @@ class TechnicalRepository:
                         delete(TechRecordImage).where(TechRecordImage.record_id == id_record)
                     )
                     if images:
-                        results = self.save_images(images)
-
-                        for result in results:
+                        for image in images:
+                            result = self.save_image_local(image, "technical")
                             saved_files.append(result["url"])
                             session.add(
                                 TechRecordImage(
@@ -748,9 +746,8 @@ class TechnicalRepository:
 
                 # Guardar imágenes (máx. 10) mediante el servicio de archivos.
                 if images:
-                    results = self.save_images(images[:10])
-
-                    for result in results:
+                    for image in images[:10]:
+                        result = self.save_image_local(image, "technical")
                         saved_files.append(result["url"])
                         session.add(
                             MovilizationImages(
@@ -819,59 +816,6 @@ class TechnicalRepository:
             "url": f"/uploads/{name_folder}/{filename}"
         }
 
-
-    def save_images(self, images, name_folder: str = "technical"):
-        try:
-            files = []
-
-            for image in images:
-                files.append(
-                    (
-                        "files",
-                        (
-                            image.filename,
-                            image.stream,
-                            image.mimetype
-                        )
-                    )
-                )
-
-            response = requests.post(
-                self.api_upload_image,
-                files=files,
-                data={
-                    "folder": name_folder
-                },
-                timeout=(5, 60)
-            )
-
-            response.raise_for_status()
-
-            return response.json()["data"]
-
-        except requests.exceptions.Timeout:
-            raise CustomAPIException(
-                "Timeout al intentar guardar las imágenes",
-                504
-            )
-
-        except requests.exceptions.ConnectionError:
-            raise CustomAPIException(
-                "No se pudo conectar con el servidor de imágenes",
-                503
-            )
-
-        except requests.exceptions.HTTPError as ex:
-            raise CustomAPIException(
-                f"El servidor de imágenes respondió con error: {ex.response.status_code}",
-                ex.response.status_code
-            )
-
-        except requests.exceptions.RequestException as ex:
-            raise CustomAPIException(
-                f"Error al guardar las imágenes: {str(ex)}",
-                500
-            )
 
     def get_clients(self, internal, external):
         with self.db.session_factory() as session:
@@ -1711,12 +1655,8 @@ class TechnicalRepository:
 
                     # Guardar imágenes del hallazgo
                     if finding_images:
-                        results = self.save_images(
-                            finding_images,
-                            "findings"
-                        )
-
-                        for result in results:
+                        for image in finding_images:
+                            result = self.save_image_local(image, "findings")
                             saved_files.append(result["url"])
 
                             new_image = AuditingFindingsImg(
@@ -1746,18 +1686,10 @@ class TechnicalRepository:
                         signature_fields.append(field)
                         signature_images.append(image)
 
-                if signature_images:
-                    results = self.save_images(signature_images, "signatures")
-
-                    if len(results) != len(signature_fields):
-                        raise CustomAPIException(
-                            "El servidor de imágenes no procesó todas las firmas",
-                            502
-                        )
-
-                    for field, result in zip(signature_fields, results):
-                        saved_files.append(result["url"])
-                        setattr(signature, field, result["url"])
+                for field, image in zip(signature_fields, signature_images):
+                    result = self.save_image_local(image, "signatures")
+                    saved_files.append(result["url"])
+                    setattr(signature, field, result["url"])
 
                 session.add(signature)
                 session.commit()
