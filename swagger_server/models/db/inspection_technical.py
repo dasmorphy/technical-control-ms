@@ -26,6 +26,8 @@ class InspectionTechnical(Base):
     )
 
     management_area = Column(Text)
+    type = Column(Text)
+    code = Column(Text)
     next_area = Column(Text)
     title_ticket = Column(Text)
     status = Column(Text)

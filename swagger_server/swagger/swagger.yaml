@@ -1318,7 +1318,14 @@ paths:
       tags:
       - Technical
       summary: Obtiene todos los registros tecnicos
-      description: Devuelve todos los registros tecnicos de la base
+      description: >-
+        Devuelve los registros técnicos de technical.technical_record (source =
+        technical_record) unidos con los registros de campo de Soportes / Asistencias
+        guardados en proxy-glpi-ms /register-technical (source = register_technical:
+        id_management_technical, inspection_id, inspection_code, type; status es
+        Completado / Incompleto y approval_status el del flujo; images son rutas de
+        inspection_documents). Los registros de campo no se incluyen cuando se filtra
+        por tasks o id-record.
       operationId: get_tech_record
       parameters:
         - name: locations

@@ -22,9 +22,11 @@ from swagger_server.models.db.client_companies import ClientCompany
 from swagger_server.models.db.client_projects import ClientProject
 from swagger_server.models.db.equipment_images import EquipmentImages
 from swagger_server.models.db.history_status_project import HistoryStatusProject
+from swagger_server.models.db.inspection_documents import InspectionDocuments
 from swagger_server.models.db.inspection_technical import InspectionTechnical
 from swagger_server.models.db.level_gasoline import LevelGasoline
 from swagger_server.models.db.location import ClientLocation
+from swagger_server.models.db.material_tech_ticket import MaterialTechTicket
 from swagger_server.models.db.material_technical_record import MaterialTechnicalRecord
 from swagger_server.models.db.movilization_client import MovilizationClient
 from swagger_server.models.db.movilization_control import MovilizationControl
@@ -44,6 +46,7 @@ from swagger_server.models.db.technical_equipment_provider import TechnicalEquip
 
 from swagger_server.models.db.technical_record import TechnicalRecord
 from swagger_server.models.db.technical_staff import TechnicalStaff
+from swagger_server.models.db.technical_ticket_management import TechnicalTicketManagement
 from swagger_server.models.db.users import Users
 from swagger_server.models.db.vehicle_copilot import VehicleCopilot
 from swagger_server.models.db.vehicle_driver import VehicleDriver
@@ -1382,7 +1385,13 @@ class TechnicalRepository:
                 # ============================
                 data = [
                     {
+                        # Flujo anterior: technical.technical_record
+                        "source": "technical_record",
                         "id_record": record.id_record,
+                        "id_management_technical": None,
+                        "inspection_id": record.inspection_id,
+                        "inspection_code": None,
+                        "type": None,
                         "resume": record.resume,
                         "status": record.status,
                         "vehicle": record.vehicle,
@@ -1417,6 +1426,19 @@ class TechnicalRepository:
                     ) in rows
                 ]
 
+                # Registros de campo de Soportes / Asistencias (proxy-glpi-ms
+                # /register-technical). No tienen proyecto ni id_record, así que no
+                # aplican cuando se filtra por proyecto o por id-record (PDF).
+                if not filters.get("tasks") and not filters.get("id_tech_record"):
+                    data.extend(self._get_field_records(session, filters))
+                    data.sort(
+                        key=lambda item: (
+                            item["created_at"] is not None,
+                            item["created_at"],
+                        ),
+                        reverse=True,
+                    )
+
                 return data
             
             except Exception as exception:
@@ -1426,6 +1448,120 @@ class TechnicalRepository:
                 
                 raise CustomAPIException("Error al obtener en la base de datos", 500)
             
+
+    def _get_field_records(self, session, filters):
+        """Registros técnicos de campo (technical_ticket_management con
+        is_field_record = true) con la misma forma que los de technical_record.
+        source = register_technical; las imágenes son rutas de
+        inspection_documents (se sirven desde TECHNICAL_BASE_URL)."""
+        stmt = (
+            select(TechnicalTicketManagement, InspectionTechnical, Client, ClientLocation)
+            .join(
+                InspectionTechnical,
+                InspectionTechnical.id_inspection == TechnicalTicketManagement.inspection_id,
+            )
+            .outerjoin(Client, Client.id_client == InspectionTechnical.client_id)
+            .outerjoin(
+                ClientLocation,
+                ClientLocation.id_location == InspectionTechnical.ubication_id,
+            )
+            .where(TechnicalTicketManagement.is_field_record.is_(True))
+            .order_by(TechnicalTicketManagement.created_at.desc())
+        )
+
+        if filters.get("locations"):
+            stmt = stmt.where(InspectionTechnical.ubication_id.in_(filters["locations"]))
+        if filters.get("clients"):
+            stmt = stmt.where(InspectionTechnical.client_id.in_(filters["clients"]))
+        if filters.get("user"):
+            stmt = stmt.where(TechnicalTicketManagement.created_by == filters["user"])
+
+        rows = session.execute(stmt).all()
+        if not rows:
+            return []
+
+        record_ids = [management.id_management_technical for management, *_ in rows]
+
+        images = {}
+        for record_id, path in session.execute(
+            select(InspectionDocuments.management_technical_id, InspectionDocuments.document_path)
+            .where(
+                InspectionDocuments.management_technical_id.in_(record_ids),
+                InspectionDocuments.document_path.isnot(None),
+            )
+            .order_by(InspectionDocuments.id_document)
+        ).all():
+            images.setdefault(record_id, []).append(path)
+
+        materials = {}
+        for material, equipment in session.execute(
+            select(MaterialTechTicket, TechnicalEquipment)
+            .outerjoin(
+                TechnicalEquipment,
+                TechnicalEquipment.id_equipment == MaterialTechTicket.material_id,
+            )
+            .where(MaterialTechTicket.tech_ticket.in_(record_ids))
+            .order_by(MaterialTechTicket.id_material)
+        ).all():
+            materials.setdefault(material.tech_ticket, []).append({
+                "id_material_record": material.id_material,
+                "id_equipment": material.material_id,
+                "material": equipment.product if equipment else material.material_description,
+                "quantity": material.quantity,
+            })
+
+        staff = {}
+        for record_id, user_id, user, attributes in session.execute(
+            select(
+                TechStaffRecord.management_technical_id,
+                Users.id_user,
+                Users.user,
+                Users.attributes,
+            )
+            .join(Users, Users.id_user == TechStaffRecord.user_tech_id)
+            .where(TechStaffRecord.management_technical_id.in_(record_ids))
+            .order_by(TechStaffRecord.id_staff_record)
+        ).all():
+            staff.setdefault(record_id, []).append({
+                "name": (attributes or {}).get("fullname"),
+                "user_tech_id": str(user_id),
+                "user": user,
+            })
+
+        return [
+            {
+                "source": "register_technical",
+                "id_record": None,
+                "id_management_technical": management.id_management_technical,
+                "inspection_id": inspection.id_inspection,
+                "inspection_code": inspection.code,
+                "type": inspection.type,
+                "resume": management.description,
+                # Completado / Incompleto (status es el del flujo de aprobación)
+                "status": management.record_status,
+                "approval_status": management.status,
+                "vehicle": management.vehicle,
+
+                "client_name": client.name if client else inspection.client_name,
+                "client_id": inspection.client_id,
+                "location_id": inspection.ubication_id,
+                "location_name": location.name if location else inspection.ubication_name,
+                "name_responsible": inspection.responsible_name,
+                "task_code": None,
+                "task_id": None,
+                "name_project": inspection.title_ticket,
+
+                "materials": materials.get(management.id_management_technical, []),
+                "technical_staff": staff.get(management.id_management_technical, []),
+
+                "created_by": management.created_by,
+                "updated_by": management.updated_by,
+                "created_at": management.created_at,
+                "updated_at": management.updated_at,
+                "images": images.get(management.id_management_technical, []),
+            }
+            for management, inspection, client, location in rows
+        ]
 
     def get_auditing(self, filters, internal, external):
         with self.db.session_factory() as session:

@@ -28,6 +28,18 @@ class TechStaffRecord(Base):
         ForeignKey("technical.technical_record.id_record")
     )
 
+    # Registro de campo de un Soporte / Asistencia (proxy-glpi-ms /register-technical);
+    # en ese caso record_id es NULL
+    inspection_id = Column(
+        Integer,
+        ForeignKey("internal_management.inspection_technical.id_inspection")
+    )
+
+    management_technical_id = Column(
+        Integer,
+        ForeignKey("internal_management.technical_ticket_management.id_management_technical")
+    )
+
     tech_staff_id = Column(
         Integer,
         ForeignKey("technical.technical_staff.id_technical")
