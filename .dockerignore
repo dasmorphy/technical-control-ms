@@ -70,3 +70,10 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+
+.git
+.gitignore
+.env
+docker-compose.yml
+dockerfile_prod

@@ -255,3 +255,9 @@ class TechnicalUseCase:
 
     def post_location(self, data, internal, external):
             self.technical_control_repository.post_location(data, internal, external)
+
+    def put_location(self, id_location, data, internal, external) -> None:
+        self.technical_control_repository.put_location(id_location, data, internal, external)
+
+    def delete_location(self, id_location, internal, external) -> None:
+        self.technical_control_repository.delete_location(id_location, internal, external)

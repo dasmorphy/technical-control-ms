@@ -826,18 +826,41 @@ class TechnicalRepository:
                     .outerjoin(ClientCompany, ClientCompany.id_company == Client.client_company_id)
                     .order_by(Client.name)
                 )
+                rows = result.all()
+
+                # sucursales en una sola consulta y agrupadas por cliente para evitar N+1
+                locations_by_client = {}
+                client_ids = [c.id_client for c, _ in rows]
+                if client_ids:
+                    locations = session.execute(
+                        select(ClientLocation)
+                        .where(ClientLocation.client_id.in_(client_ids))
+                        .order_by(ClientLocation.name)
+                    ).scalars().all()
+                    for loc in locations:
+                        locations_by_client.setdefault(loc.client_id, []).append({
+                            "id_location": loc.id_location,
+                            "name": loc.name,
+                            "address": loc.address,
+                            "lat": loc.lat,
+                            "long": loc.long,
+                            "created_at": loc.created_at,
+                            "created_by": loc.created_by
+                        })
+
                 clients = [
                     {
                         "id_client": c.id_client,
                         "name": c.name,
                         "client_company_id": c.client_company_id,
                         "client_company": self._client_company_to_dict(company),
+                        "locations": locations_by_client.get(c.id_client, []),
                         "created_by": c.created_by,
                         "updated_by": c.updated_by,
                         "created_at": c.created_at,
                         "updated_at": c.updated_at
                     }
-                    for c, company in result.all()
+                    for c, company in rows
                 ]
                 return clients
             except Exception as exception:
@@ -925,7 +948,8 @@ class TechnicalRepository:
                     "id_client": new_client.id_client,
                     "name": new_client.name,
                     "client_company_id": company.id_company,
-                    "client_company": self._client_company_to_dict(company)
+                    "client_company": self._client_company_to_dict(company),
+                    "locations": []
                 }
             except Exception as exception:
                 session.rollback()
@@ -2383,6 +2407,66 @@ class TechnicalRepository:
                     raise exception
                 
                 raise CustomAPIException("Error al insertar en la base de datos", 500)
+
+            finally:
+                session.close()
+
+    def put_location(self, id_location, data, internal, external) -> None:
+        with self.db.session_factory() as session:
+            try:
+                location = session.get(ClientLocation, id_location)
+                if not location:
+                    raise CustomAPIException("No existe la ubicación", 404)
+
+                location.name = data.get("name").strip()
+                location.address = data.get("address")
+                location.long = data.get("long")
+                location.lat = data.get("lat")
+                location.updated_by = data.get("user")
+
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al actualizar la ubicación en la base de datos", 500)
+
+            finally:
+                session.close()
+
+    def delete_location(self, id_location, internal, external) -> None:
+        with self.db.session_factory() as session:
+            try:
+                location = session.get(ClientLocation, id_location)
+                if not location:
+                    raise CustomAPIException("No existe la ubicación", 404)
+
+                # No se elimina si otros registros la referencian
+                in_use = session.scalar(
+                    select(
+                        exists().where(TaskLocation.location_id == id_location)
+                        | exists().where(TechnicalRecord.location_id == id_location)
+                        | exists().where(Auditing.location_id == id_location)
+                        | exists().where(InspectionTechnical.ubication_id == id_location)
+                    )
+                )
+                if in_use:
+                    raise CustomAPIException(
+                        "La ubicación está asociada a proyectos, registros técnicos, auditorías o inspecciones y no se puede eliminar",
+                        409
+                    )
+
+                session.delete(location)
+                session.commit()
+            except Exception as exception:
+                session.rollback()
+                logger.error('Error: {}', str(exception), internal=internal, external=external)
+                if isinstance(exception, CustomAPIException):
+                    raise exception
+
+                raise CustomAPIException("Error al eliminar la ubicación de la base de datos", 500)
 
             finally:
                 session.close()
